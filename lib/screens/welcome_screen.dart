@@ -1,0 +1,267 @@
+import 'package:flutter/material.dart';
+import '../data/app_data.dart';
+import 'main_menu_screen.dart';
+
+class WelcomeScreen extends StatefulWidget {
+  const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  String _selectedCurrency = AppData.currency;
+
+  void _showSettingsDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(Icons.language, color: Colors.blueGrey),
+                title: const Text('Idioma'),
+                trailing: const Text('Español', style: TextStyle(color: Colors.grey)),
+                onTap: () => _showMockSnack('Cambio de idioma próximamente'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.dark_mode, color: Colors.indigo),
+                title: const Text('Tema'),
+                trailing: const Text('Automático', style: TextStyle(color: Colors.grey)),
+                onTap: () => _showMockSnack('Modo oscuro/claro próximamente'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.color_lens, color: Colors.orange),
+                title: const Text('Colores de Interfaz'),
+                onTap: () => _showMockSnack('Personalización de colores próximamente'),
+              ),
+              const Divider(),
+              const Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
+              ListTile(
+                leading: const Icon(Icons.visibility, color: Colors.teal),
+                title: const Text('Modo Daltonismo'),
+                subtitle: const Text('Protanopia, Deuteranopia, Tritanopia'),
+                trailing: Switch(value: false, onChanged: (v) => _showMockSnack('Filtros de daltonismo en desarrollo')),
+              ),
+              ListTile(
+                leading: const Icon(Icons.text_increase, color: Colors.teal),
+                title: const Text('Tamaño de Texto y Contraste'),
+                onTap: () => _showMockSnack('Ajustes de contraste próximamente'),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  void _showProfileDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.amber,
+                child: Icon(Icons.person, size: 40, color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              const Text('Mi Perfil', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('Inicia sesión para guardar tus datos en la nube y sincronizar con otros dispositivos.'),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showMockSnack('Inicio de sesión en desarrollo');
+                },
+                icon: const Icon(Icons.cloud_sync),
+                label: const Text('Sincronizar en la Nube'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F172A),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+              )
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  void _showMockSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A), // Dark slate/Midnight
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Currency Selector Top Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCurrency,
+                        dropdownColor: const Color(0xFF1E293B),
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.amber),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        items: const [
+                          DropdownMenuItem(value: '€', child: Text('EUR (€)')),
+                          DropdownMenuItem(value: '\$', child: Text('USD (\$)')),
+                          DropdownMenuItem(value: '£', child: Text('GBP (£)')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedCurrency = val);
+                            AppData.currency = val; // Global update
+                            _showMockSnack('Moneda cambiada a $val');
+                          }
+                        },
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+            
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // LOGO: Lynx + Bill Concept
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.amber, // Sharp Lynx Eye color
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amber.withOpacity(0.3),
+                            blurRadius: 30,
+                            spreadRadius: 10,
+                          )
+                        ]
+                      ),
+                      child: const Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(Icons.visibility, size: 80, color: Color(0xFF0F172A)), // Vision/Lynx Eye
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    
+                    const Text(
+                      'Billince',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Visión experta para tus finanzas',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.blueGrey.shade300,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 60),
+                    
+                    // Action Buttons
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber, // Sharp action color
+                              foregroundColor: const Color(0xFF0F172A),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              elevation: 5,
+                            ),
+                            onPressed: () => _showMockSnack('Funcionalidad de inicio de sesión en desarrollo'),
+                            child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(height: 16),
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white54, width: 2),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const MainMenuScreen()),
+                              );
+                            },
+                            child: const Text('Continuar sin iniciar sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // Bottom Submenu (Profile & Settings)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.person_outline, color: Colors.white70, size: 30),
+                    onPressed: _showProfileDialog,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 30),
+                    onPressed: _showSettingsDialog,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
