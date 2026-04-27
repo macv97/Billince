@@ -41,7 +41,7 @@ Billince es una aplicación móvil de gestión financiera personal desarrollada 
 - Indicador visual de archivos adjuntos (icono de clip 📎).
 - Eliminación por deslizamiento horizontal (swipe) o icono de papelera.
 
-### 3. Gastos Compartidos (estilo Tricount)
+### 3. Gastos Compartidos
 - Crear **eventos/grupos** temáticos (ej. "Viaje a Asturias", "Piso Compartido").
 - **Iconos inteligentes** automáticos según el nombre del evento:
   - ✈️ Viaje → avión
