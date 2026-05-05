@@ -2,11 +2,13 @@ class ChecklistItem {
   final String id;
   String title;
   bool isDone;
+  double price;
 
   ChecklistItem({
     required this.id,
     required this.title,
     this.isDone = false,
+    this.price = 0.0,
   });
 }
 

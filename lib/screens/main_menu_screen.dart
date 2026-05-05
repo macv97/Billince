@@ -3,6 +3,7 @@ import 'expenses_screen.dart';
 import 'checklist_screen.dart';
 import 'summary_screen.dart';
 import 'shared_expenses_screen.dart';
+import 'calendar_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
@@ -17,24 +18,15 @@ class MainMenuScreen extends StatelessWidget {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Tiny Logo in AppBar
             Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: colorScheme.tertiary, // Amber
-                shape: BoxShape.circle,
-              ),
+              decoration: const BoxDecoration(color: Color(0xFFF59E0B), shape: BoxShape.circle),
               child: const Icon(Icons.visibility, color: Color(0xFF0F172A), size: 20),
             ),
             const SizedBox(width: 10),
             Text(
-              'Billince', 
-              style: TextStyle(
-                fontWeight: FontWeight.w900, 
-                letterSpacing: 1.2, 
-                color: colorScheme.primary,
-                fontSize: 24,
-              )
+              'Billince',
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2, color: colorScheme.primary, fontSize: 24),
             ),
           ],
         ),
@@ -49,74 +41,63 @@ class MainMenuScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Text(
                 'Tu control financiero',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colorScheme.primary), // Dark slate
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colorScheme.primary),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 '¿Qué necesitas gestionar hoy?',
-                style: TextStyle(fontSize: 16, color: Colors.blueGrey.shade400),
+                style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade400),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
-              
+              const SizedBox(height: 28),
+
               _buildMenuCard(
                 context,
                 title: 'Gestión de Gastos',
-                subtitle: 'Escanea tickets y controla tus finanzas diarias',
+                subtitle: 'Escanea tickets y controla tus finanzas',
                 icon: Icons.receipt_long,
-                color: colorScheme.primary, // Dark Slate
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ExpensesScreen()),
-                  );
-                },
+                color: colorScheme.primary,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen())),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildMenuCard(
                 context,
                 title: 'Gastos Compartidos',
-                subtitle: 'Comparte cuentas y calcula quién debe a quién',
+                subtitle: 'Comparte cuentas y cuadra saldos',
                 icon: Icons.group,
-                color: colorScheme.tertiary, // Amber
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SharedExpensesScreen()),
-                  );
-                },
+                color: const Color(0xFFF59E0B),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharedExpensesScreen())),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildMenuCard(
                 context,
                 title: 'Lista de la Compra',
-                subtitle: 'Organiza tus compras con IA y OCR',
+                subtitle: 'Organiza tus compras con análisis IA',
                 icon: Icons.checklist_rtl,
-                color: colorScheme.secondary, // Emerald Green
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ChecklistScreen()),
-                  );
-                },
+                color: const Color(0xFF10B981),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChecklistScreen())),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildMenuCard(
                 context,
                 title: 'Resumen y Gráficos',
                 subtitle: 'Visualiza en qué te gastas el dinero',
                 icon: Icons.pie_chart,
-                color: Colors.blueGrey, // Neutral color for statistics
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SummaryScreen()),
-                  );
-                },
+                color: Colors.blueGrey,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SummaryScreen())),
+              ),
+              const SizedBox(height: 14),
+              _buildMenuCard(
+                context,
+                title: 'Calendario y Eventos',
+                subtitle: 'Agenda personal y tareas diarias',
+                icon: Icons.calendar_month,
+                color: Colors.deepPurple,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarScreen())),
               ),
             ],
           ),
@@ -125,39 +106,42 @@ class MainMenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildMenuCard(BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return Card(
-      elevation: 3,
-      shadowColor: color.withOpacity(0.3),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 2,
+      shadowColor: color.withOpacity(0.25),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(18.0),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, size: 32, color: color),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+                child: Icon(icon, size: 28, color: color),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
-                    const SizedBox(height: 6),
+                    Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                    const SizedBox(height: 4),
                     Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600, height: 1.3)),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Icon(Icons.arrow_forward_ios, color: Colors.grey.shade300, size: 18),
+              const SizedBox(width: 8),
+              Icon(Icons.arrow_forward_ios, color: Colors.grey.shade300, size: 16),
             ],
           ),
         ),

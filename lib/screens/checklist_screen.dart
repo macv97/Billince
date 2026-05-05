@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/app_data.dart';
 import '../models/checklist_item.dart';
 import 'shopping_list_detail_screen.dart';
+import 'shopping_insights_screen.dart';
 
 class ChecklistScreen extends StatefulWidget {
   const ChecklistScreen({super.key});
@@ -16,19 +17,25 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nueva Lista de la Compra'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Nueva Lista'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Ej. Compra Mercadona, Cumpleaños...',
-            border: OutlineInputBorder(),
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Ej. Compra semanal, Barbacoa...',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           textCapitalization: TextCapitalization.sentences,
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0F172A),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               final title = controller.text.trim();
               if (title.isNotEmpty) {
@@ -51,12 +58,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 
   void _deleteList(ShoppingList list) {
-    setState(() {
-      AppData.shoppingLists.remove(list);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Lista eliminada')),
-    );
+    setState(() => AppData.shoppingLists.remove(list));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lista eliminada')));
   }
 
   @override
@@ -66,6 +69,16 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         title: const Text('Mis Listas de Compra'),
         backgroundColor: const Color(0xFFFEF3C7),
         elevation: 0,
+        actions: [
+          // Insights button – labeled for clarity
+          TextButton.icon(
+            icon: const Icon(Icons.auto_awesome, color: Color(0xFFF59E0B), size: 20),
+            label: const Text('Análisis', style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold)),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ShoppingInsightsScreen()));
+            },
+          ),
+        ],
       ),
       body: AppData.shoppingLists.isEmpty
           ? Center(
@@ -83,19 +96,19 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.only(bottom: 80, top: 16),
+              padding: const EdgeInsets.only(bottom: 80, top: 12),
               itemCount: AppData.shoppingLists.length,
               itemBuilder: (context, index) {
                 final list = AppData.shoppingLists[index];
                 final completedItems = list.items.where((i) => i.isDone).length;
                 final totalItems = list.items.length;
-                
+
                 return Dismissible(
                   key: Key(list.id),
                   direction: DismissDirection.endToStart,
                   background: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(14)),
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 20),
                     child: const Icon(Icons.delete, color: Colors.white),
@@ -103,14 +116,15 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   onDismissed: (direction) => _deleteList(list),
                   child: Card(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 1,
                     child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ShoppingListDetailScreen(shoppingList: list)),
-                        ).then((_) => setState(() {})); // Refresh when coming back
+                          MaterialPageRoute(builder: (_) => ShoppingListDetailScreen(shoppingList: list)),
+                        ).then((_) => setState(() {}));
                       },
                       leading: CircleAvatar(
                         backgroundColor: const Color(0xFFFEF3C7),
@@ -119,9 +133,11 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       title: Text(list.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text(
                         totalItems == 0 ? 'Vacía' : '$completedItems de $totalItems completados',
-                        style: TextStyle(color: totalItems > 0 && completedItems == totalItems ? const Color(0xFF10B981) : Colors.grey.shade600),
+                        style: TextStyle(
+                          color: totalItems > 0 && completedItems == totalItems ? const Color(0xFF10B981) : Colors.grey.shade600,
+                        ),
                       ),
-                      trailing: const Icon(Icons.chevron_right),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                     ),
                   ),
                 );
@@ -137,4 +153,3 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     );
   }
 }
-

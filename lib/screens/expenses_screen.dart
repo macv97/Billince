@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import '../models/expense.dart';
 import '../data/app_data.dart';
 
@@ -45,7 +48,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 title: const Text('Hacer una Foto'),
                 onTap: () {
                   Navigator.pop(context);
-                  _processTicketSimulation('Foto_${DateTime.now().millisecondsSinceEpoch}.jpg');
+                  _processTicketReal(ImageSource.camera);
                 },
               ),
               ListTile(
@@ -53,7 +56,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 title: const Text('Subir desde Galería'),
                 onTap: () {
                   Navigator.pop(context);
-                  _processTicketSimulation('Imagen_Galeria.png');
+                  _processTicketReal(ImageSource.gallery);
                 },
               ),
               ListTile(
@@ -70,6 +73,94 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         );
       }
     );
+  }
+
+  Future<void> _processTicketReal(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+    if (pickedFile == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Expanded(child: Text("Analizando ticket con IA...")),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final inputImage = InputImage.fromFilePath(pickedFile.path);
+      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+
+      double totalFound = 0.0;
+      double largestNumber = 0.0;
+      String storeName = 'Comercio Desconocido';
+
+      final lines = recognizedText.blocks.expand((b) => b.lines).toList();
+
+      // First meaningful line is usually the store name
+      for (var line in lines) {
+        final trimmed = line.text.trim();
+        if (trimmed.length > 3 && !RegExp(r'^\d').hasMatch(trimmed) && !RegExp(r'^\*').hasMatch(trimmed)) {
+          storeName = trimmed.length > 25 ? trimmed.substring(0, 25) : trimmed;
+          break;
+        }
+      }
+
+      // Two-pass strategy:
+      // Pass 1 – look for a line containing TOTAL/IMPORTE and grab its number
+      for (var line in lines) {
+        final upper = line.text.toUpperCase();
+        if (upper.contains('TOTAL') || upper.contains('IMPORTE') || upper.contains('A PAGAR') || upper.contains('AMOUNT')) {
+          final priceMatch = RegExp(r'(\d+[\.,]\d+)').firstMatch(upper);
+          if (priceMatch != null) {
+            final price = double.tryParse(priceMatch.group(1)!.replaceAll(',', '.')) ?? 0.0;
+            if (price > 0 && price < 10000) totalFound = price;
+          }
+        }
+        // Track the largest number as fallback
+        for (var m in RegExp(r'(\d+[\.,]\d+)').allMatches(line.text)) {
+          final price = double.tryParse(m.group(1)!.replaceAll(',', '.')) ?? 0.0;
+          if (price > largestNumber && price < 10000) largestNumber = price;
+        }
+      }
+
+      // Pass 2 – if no TOTAL keyword was found, use the largest number
+      if (totalFound == 0.0 && largestNumber > 0.0) totalFound = largestNumber;
+
+      textRecognizer.close();
+      Navigator.pop(context);
+
+      if (totalFound > 0) {
+        setState(() {
+          AppData.expenses.insert(0, Expense(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: storeName,
+            amount: totalFound,
+            date: DateTime.now(),
+            module: 'General',
+            attachedFileName: pickedFile.path.split('/').last,
+          ));
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('¡Gasto de ${AppData.currency}${totalFound.toStringAsFixed(2)} añadido automáticamente!'),
+          backgroundColor: const Color(0xFF10B981),
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No detectamos el total. Rellena los datos manualmente.')));
+        _showExpenseForm(initialTitle: storeName, attachedFileName: pickedFile.path.split('/').last);
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al analizar la imagen: $e')));
+    }
   }
 
   void _processTicketSimulation(String fileName) async {
@@ -272,14 +363,20 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
-  void _showExpenseForm({Expense? existingExpense}) {
-    final titleController = TextEditingController(text: existingExpense?.title ?? '');
+  void _showExpenseForm({
+    Expense? existingExpense,
+    String? initialTitle,
+    double? initialAmount,
+    String? initialModule,
+    String? attachedFileName,
+  }) {
+    final titleController = TextEditingController(text: existingExpense?.title ?? initialTitle ?? '');
     final amountController = TextEditingController(
-      text: existingExpense != null ? existingExpense.amount.toStringAsFixed(2) : '',
+      text: existingExpense != null ? existingExpense.amount.toStringAsFixed(2) : (initialAmount != null ? initialAmount.toStringAsFixed(2) : ''),
     );
     
-    String selectedModule = existingExpense?.module ?? (AppData.modules.isNotEmpty ? AppData.modules.first : 'General');
-    String? attachedFile = existingExpense?.attachedFileName;
+    String selectedModule = existingExpense?.module ?? initialModule ?? (AppData.modules.isNotEmpty ? AppData.modules.first : 'General');
+    String? attachedFile = existingExpense?.attachedFileName ?? attachedFileName;
 
     if (!AppData.modules.contains(selectedModule)) {
        selectedModule = 'General';
@@ -328,7 +425,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       decoration: InputDecoration(
                         labelText: 'Importe (${AppData.currency})',
                         border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.attach_money),
+                        prefixText: '${AppData.currency} ',
+                        prefixIcon: const Icon(Icons.payments_outlined),
                       ),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),

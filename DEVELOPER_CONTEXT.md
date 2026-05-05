@@ -7,57 +7,97 @@ Este archivo sirve como memoria técnica y manual de identidad para Billince. Su
 ## 💎 Identidad de Marca y Branding
 *   **Nombre:** Billince (Fusión de *Bill* -factura- y *Lince* -animal de visión aguda-).
 *   **Concepto:** Visión experta y precisión en las finanzas personales.
+*   **Moneda por defecto:** `€` (Euro). Configurable en la WelcomeScreen (€, $, £). Se usa `AppData.currency` en TODA la app.
 *   **Paleta de Colores (Lynx Palette):**
     *   **Primario (Midnight Blue):** `#0F172A` (Elegancia y seguridad).
     *   **Acento (Amber/Lynx Eye):** `#F59E0B` (Agudeza visual y llamadas a la acción).
     *   **Éxito (Emerald):** `#10B981` (Saldos positivos y confirmaciones).
     *   **Fondo/Soft (Cream Amber):** `#FEF3C7` (Superficies secundarias y AppBars).
-*   **Iconografía:** El logo principal es un **ojo de lince** minimalista. En la app se usan iconos dinámicos según el contexto (avión para viajes, cubiertos para comida, etc.).
+*   **Iconografía:** El logo principal es un **ojo de lince** minimalista.
+
+---
+
+## 🔄 Flujo Principal de la Aplicación
+
+```
+1. LISTA DE LA COMPRA
+   → El usuario crea una lista antes de ir a comprar
+   → Añade productos (manualmente, escaneando foto, o desde galería)
+   → En el supermercado, va tachando los productos que compra
+   → ⚠️ NO se registra ningún importe aquí. Es solo un checklist.
+
+2. GESTIÓN DE GASTOS
+   → Tras la compra, el usuario escanea el TICKET con la cámara o galería
+   → La IA (ML Kit) extrae: nombre del comercio + importe TOTAL
+   → El gasto se añade automáticamente a la lista de gastos
+   → Si la IA no detecta el total, se abre formulario manual pre-rellenado
+   → También se pueden añadir gastos manuales sin ticket
+
+3. RESUMEN Y GRÁFICOS
+   → Lee de AppData.expenses (solo gastos confirmados)
+   → Muestra: total acumulado, media, nº transacciones
+   → Desglose por categorías con barras + últimos gastos
+
+4. ANÁLISIS DE COMPRAS (Shopping Insights)
+   → Lee de AppData.shoppingLists (solo hábitos de compra, sin €)
+   → Muestra: productos más repetidos, día favorito, tasa de completado
+   → Gráfico de distribución semanal
+   → IA Advisor da consejos basados en patrones de comportamiento
+```
 
 ---
 
 ## 🛠️ Arquitectura Técnica (Flutter)
 *   **Framework:** Flutter con Material 3.
-*   **Estado Global:** 
-    *   **Datos de la App:** Gestionados en memoria vía `lib/data/app_data.dart` (Gastos, Listas, Grupos).
-    *   **Ajustes de Usuario:** Gestionados mediante `SettingsProvider` (paquete `provider`) con persistencia real en `shared_preferences`.
+*   **Estado Global:**
+    *   **Datos de la App:** `lib/data/app_data.dart` — gastos, listas, grupos, eventos de calendario.
+    *   **Ajustes de Usuario:** `SettingsProvider` (paquete `provider`) con persistencia en `shared_preferences`.
+*   **OCR / IA:** `google_mlkit_text_recognition` + `image_picker` para escaneo real de tickets.
+    *   Estrategia de doble pasada: primero busca líneas con TOTAL/IMPORTE, luego fallback al número más grande.
 *   **Estructura de Carpetas:**
-    *   `lib/models/`: Clases de datos (`Expense`, `SharedGroup`, `ChecklistItem`, `ShoppingList`, etc.).
+    *   `lib/models/`: `Expense`, `SharedGroup`, `ChecklistItem`, `ShoppingList`, `CalendarEvent`.
     *   `lib/screens/`: Vistas de la aplicación.
-    *   `lib/data/`: `AppData` (datos volátiles) y `SettingsProvider` (lógica de configuración).
-*   **Módulos Principales:**
-    1.  **WelcomeScreen:** Selector de moneda, login simulado y acceso al modal de **Ajustes y Accesibilidad**.
-    2.  **ExpensesScreen:** Gestión individual con escaneo IA simulado y soporte de adjuntos (PDF/IMG).
-    3.  **SharedExpenses:** Gestión de grupos/eventos con liquidación inteligente de deudas.
-    4.  **ChecklistScreen (Multi-lista):** Vista general de listas de compra guardadas. Permite crear múltiples listas (ej. "Semana", "Fiesta") y persistir sus elementos.
-    5.  **SummaryScreen:** Gráficos de barras corporativos y desglose por categorías.
+    *   `lib/data/`: `AppData` (datos volátiles) y `SettingsProvider` (configuración persistente).
+
+## 📱 Módulos Principales
+
+| Módulo | Archivo | Propósito |
+|---|---|---|
+| **WelcomeScreen** | `welcome_screen.dart` | Selector de moneda, login simulado, Ajustes y Accesibilidad |
+| **Gestión de Gastos** | `expenses_screen.dart` | Escaneo OCR de tickets, gastos manuales, categorías, adjuntos |
+| **Gastos Compartidos** | `shared_expenses_screen.dart` | Grupos/eventos con liquidación inteligente de deudas |
+| **Lista de la Compra** | `checklist_screen.dart` → `shopping_list_detail_screen.dart` | Multi-lista checklist puro (sin importes) |
+| **Análisis de Compras** | `shopping_insights_screen.dart` | IA Advisor, patrones, ranking de productos |
+| **Resumen y Gráficos** | `summary_screen.dart` | Dashboard financiero con barras y últimos gastos |
+| **Calendario y Eventos** | `calendar_screen.dart` | Agenda personal con calendario mensual y categorías |
 
 ---
 
-## ♿ Accesibilidad y UX (Funcional)
-*   **SettingsProvider:** Controla el estado global de la interfaz.
-*   **Modos de Daltonismo:** Implementado mediante matrices de color reales (`ColorFiltered`) para Protanopia, Deuteranopia y Tritanopia.
-*   **Tamaño de Texto:** Ajustable dinámicamente mediante `textScaleFactor` global (de 1.0 a 1.5).
-*   **Temas:** Soporte para Tema Claro, Oscuro y Automático (Sistema).
+## ♿ Accesibilidad y UX
+*   **Modos de Daltonismo:** Protanopia, Deuteranopia, Tritanopia (`ColorFiltered` en `main.dart`).
+*   **Tamaño de Texto:** Ajustable globalmente (1.0 a 1.5) con `textScaleFactor`.
+*   **Temas:** Claro, Oscuro, Automático.
 *   **Colores de Interfaz:** Personalización del color semilla del `ThemeData`.
-*   **Usabilidad:** Gestos de *swipe* para eliminar listas y elementos. Límite de archivos adjuntos de **5MB**.
+*   **Botones:** Todos los botones de acción en AppBar llevan texto + icono para claridad.
+*   **FABs:** En módulos de listas se usa un bottom sheet con opciones (manual / cámara / galería).
+*   **Gestos:** Swipe para eliminar en listas, cards y eventos.
+*   **Border Radius estándar:** 14px cards, 20px dialogs, 12px inputs.
 
 ---
 
 ## 🐙 Gestión de Repositorio (GitHub)
 *   **Repositorio:** `https://github.com/macv97/Billince.git`
-*   **Estrategia de Ramas:**
-    *   `main`: Rama de producción/estable.
-    *   `dev`: Rama de desarrollo activo (donde se realizan los cambios actuales).
+*   **Ramas:** `main` (producción) / `dev` (desarrollo activo).
 *   **Compilación:** APK en `build/app/outputs/flutter-apk/app-release.apk`.
 
 ---
 
 ## 🚧 Estado Actual y Pendientes (Roadmap)
-*   **Persistencia de Datos:** Los ajustes se guardan (`shared_preferences`), pero los gastos y listas de compra siguen siendo volátiles (se pierden al cerrar la app). Pendiente migrar a `sqflite` o `Hive`.
-*   **IA Real:** Los procesos de escaneo son simulados (`Future.delayed`).
-*   **Sincronización:** Pendiente implementación de backend para compartir eventos en tiempo real.
+*   **Persistencia de Datos:** Ajustes se guardan (`shared_preferences`). Gastos y listas son volátiles. Pendiente: `sqflite` o `Hive`.
+*   **IA avanzada:** ML Kit funciona para OCR. Pendiente: clasificación automática de gastos por tipo de comercio.
+*   **Sincronización:** Pendiente backend para compartir eventos.
+*   **Widget de Calendario:** Implementar Android Home Screen Widget para eventos del día.
 
 ---
 
-**Nota para el Agente:** Priorizar siempre el uso de la paleta `#0F172A` y `#F59E0B`. Los ajustes globales se inyectan en `main.dart` mediante `ChangeNotifierProvider`.
+**Nota para el Agente:** Priorizar siempre la paleta `#0F172A` y `#F59E0B`. Los ajustes globales se inyectan en `main.dart` mediante `ChangeNotifierProvider`. La moneda SIEMPRE debe leerse de `AppData.currency`, nunca hardcodear `$` o `€`.

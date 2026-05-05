@@ -12,7 +12,7 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-  String _selectedCurrency = AppData.currency;
+  String _selectedCurrency = '€';
 
   void _showSettingsDialog() {
     showModalBottomSheet(
