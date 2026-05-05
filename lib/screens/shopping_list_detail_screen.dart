@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/checklist_item.dart';
 import '../data/app_data.dart';
 
@@ -147,6 +149,15 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     final pickedFile = await picker.pickImage(source: source);
     if (pickedFile == null) return;
 
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    if (apiKey.isEmpty || apiKey == 'PON_AQUI_TU_API_KEY') {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+         content: Text('Error: La API Key de IA no está configurada.'),
+         backgroundColor: Colors.redAccent,
+       ));
+       return;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -155,45 +166,55 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
         content: const Row(children: [
           CircularProgressIndicator(),
           SizedBox(width: 20),
-          Expanded(child: Text('Analizando con IA...')),
+          Expanded(child: Text('Analizando lista con Gemini AI...')),
         ]),
       ),
     );
 
     try {
-      final inputImage = InputImage.fromFilePath(pickedFile.path);
-      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+      final imageBytes = await pickedFile.readAsBytes();
+      
+      final model = GenerativeModel(
+        model: 'gemini-flash-latest',
+        apiKey: apiKey,
+      );
 
-      List<ChecklistItem> extractedItems = [];
-      final lines = recognizedText.blocks.expand((b) => b.lines).toList();
+      final prompt = TextPart('Analiza esta imagen y extrae una lista de productos para comprar. Ignora los precios, cantidades u otra información adicional, solo devuelve el nombre de los productos. Devuelve ÚNICAMENTE un array JSON de strings. Ejemplo: ["Leche", "Huevos", "Pan"]. No incluyas markdown.');
+      final imagePart = DataPart('image/jpeg', imageBytes);
 
-      for (var line in lines.take(20)) {
-        final text = line.text.trim();
-        // Skip very short lines, lines that are only numbers/symbols, or header-like lines
-        if (text.length > 2 && !RegExp(r'^[\d\s\*\-\.,:€\$£]+$').hasMatch(text)) {
-          // Remove trailing price patterns if present (e.g. "Leche 1.20" → "Leche")
-          final cleanedText = text.replaceAll(RegExp(r'\s+\d+[\.,]\d+\s*$'), '').trim();
-          if (cleanedText.length > 2) {
-            extractedItems.add(ChecklistItem(
-              id: '${DateTime.now().millisecondsSinceEpoch}${extractedItems.length}',
-              title: cleanedText,
-            ));
-          }
+      final response = await model.generateContent([
+        Content.multi([prompt, imagePart])
+      ]);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      final text = response.text?.trim() ?? '[]';
+      final cleanText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      
+      final List<dynamic> jsonList = jsonDecode(cleanText);
+      final List<ChecklistItem> extractedItems = [];
+      
+      for (var item in jsonList) {
+        if (item is String && item.isNotEmpty) {
+          extractedItems.add(ChecklistItem(
+            id: '${DateTime.now().millisecondsSinceEpoch}${extractedItems.length}',
+            title: item,
+          ));
         }
       }
 
-      textRecognizer.close();
-      Navigator.pop(context);
-
       if (extractedItems.isNotEmpty) {
         setState(() => widget.shoppingList.items.insertAll(0, extractedItems));
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('¡${extractedItems.length} productos detectados!')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('¡${extractedItems.length} productos detectados!'),
+          backgroundColor: const Color(0xFF10B981),
+        ));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se detectaron productos.')));
       }
     } catch (e) {
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }

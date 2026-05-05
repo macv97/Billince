@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/app_data.dart';
 import '../data/settings_provider.dart';
+import '../data/supabase_repository.dart';
 import 'main_menu_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -110,6 +111,149 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         settings.setTextScaleFactor(v);
                       },
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          }
+        );
+      }
+    );
+  }
+
+  bool _isLoadingAuth = false;
+
+  void _showAuthDialog() {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    bool isLogin = true;
+    String? errorMessage;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                top: 24, left: 24, right: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(isLogin ? 'Iniciar Sesión' : 'Registrarse', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const SizedBox(height: 20),
+                  if (errorMessage != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 15),
+                      decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), border: Border.all(color: Colors.redAccent.withOpacity(0.5)), borderRadius: BorderRadius.circular(8)),
+                      child: Text(errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 14)),
+                    ),
+                  TextField(
+                    controller: emailController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Email', labelStyle: TextStyle(color: Colors.grey), enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: passwordController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Contraseña', labelStyle: TextStyle(color: Colors.grey), enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 20),
+                  if (_isLoadingAuth) const CircularProgressIndicator(color: Colors.amber)
+                  else Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 14)),
+                        onPressed: () async {
+                          final email = emailController.text.trim();
+                          final password = passwordController.text.trim();
+                          
+                          if (email.isEmpty || password.isEmpty) {
+                            setModalState(() => errorMessage = 'Por favor rellena ambos campos.');
+                            return;
+                          }
+
+                          final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                          if (!emailRegex.hasMatch(email)) {
+                            setModalState(() => errorMessage = 'El formato del email no es válido. Asegúrate de incluir "@" y un dominio (ej: usuario@gmail.com).');
+                            return;
+                          }
+                          
+                          if (!isLogin && password.length < 6) {
+                            setModalState(() => errorMessage = 'La contraseña debe tener al menos 6 caracteres.');
+                            return;
+                          }
+
+                          setModalState(() {
+                            _isLoadingAuth = true;
+                            errorMessage = null;
+                          });
+                          
+                          try {
+                            if (isLogin) {
+                              await SupabaseRepository.signIn(email, password);
+                            } else {
+                              await SupabaseRepository.signUp(email, password);
+                            }
+                            await SupabaseRepository.loadUserSettings();
+                            await SupabaseRepository.loadInitialData();
+                            if (mounted) {
+                              Navigator.pop(ctx);
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainMenuScreen()));
+                            }
+                          } catch (e) {
+                            final msg = e.toString();
+                            setModalState(() {
+                              if (msg.contains('Invalid login credentials')) {
+                                errorMessage = 'Credenciales incorrectas. Comprueba tu email y contraseña.';
+                              } else if (msg.contains('already registered')) {
+                                errorMessage = 'Este correo ya está registrado. Prueba a iniciar sesión.';
+                              } else if (msg.contains('invalid format') || msg.contains('validate email')) {
+                                errorMessage = 'El formato del email no es válido.';
+                              } else if (msg.contains('Email not confirmed')) {
+                                errorMessage = 'Debes confirmar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.';
+                              } else if (msg.contains('Password should be at least')) {
+                                errorMessage = 'La contraseña es demasiado corta. Usa al menos 6 caracteres.';
+                              } else {
+                                errorMessage = 'Ha ocurrido un error. Inténtalo de nuevo.';
+                              }
+                            });
+                          } finally {
+                            setModalState(() => _isLoadingAuth = false);
+                          }
+                        },
+                        child: Text(isLogin ? 'Entrar' : 'Crear Cuenta', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                      const SizedBox(height: 10),
+                      TextButton(
+                        onPressed: () {
+                          setModalState(() {
+                            isLogin = !isLogin;
+                            errorMessage = null;
+                          });
+                        },
+                        child: Text(isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión', style: const TextStyle(color: Colors.amber)),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54), padding: const EdgeInsets.symmetric(vertical: 12)),
+                        onPressed: () => _showMockSnack('Login con Google en desarrollo'),
+                        icon: const Icon(Icons.g_mobiledata, size: 30),
+                        label: const Text('Continuar con Google'),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -273,7 +417,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               elevation: 5,
                             ),
-                            onPressed: () => _showMockSnack('Funcionalidad de inicio de sesión en desarrollo'),
+                            onPressed: _showAuthDialog,
                             child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           ),
                           const SizedBox(height: 16),

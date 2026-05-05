@@ -2,9 +2,12 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/expense.dart';
 import '../data/app_data.dart';
+import '../data/supabase_repository.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -80,6 +83,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final pickedFile = await picker.pickImage(source: source);
     if (pickedFile == null) return;
 
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    if (apiKey.isEmpty || apiKey == 'PON_AQUI_TU_API_KEY') {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+         content: Text('Error: La API Key de IA no está configurada.'),
+         backgroundColor: Colors.redAccent,
+       ));
+       return;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -88,69 +100,60 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 20),
-            Expanded(child: Text("Analizando ticket con IA...")),
+            Expanded(child: Text("Analizando ticket con Gemini AI...")),
           ],
         ),
       ),
     );
 
     try {
-      final inputImage = InputImage.fromFilePath(pickedFile.path);
-      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+      final imageBytes = await pickedFile.readAsBytes();
+      
+      final model = GenerativeModel(
+        model: 'gemini-flash-latest',
+        apiKey: apiKey,
+      );
 
-      double totalFound = 0.0;
-      double largestNumber = 0.0;
-      String storeName = 'Comercio Desconocido';
+      final prompt = TextPart('Analiza este ticket de compra. Extrae el nombre del comercio (storeName), el importe total a pagar (totalAmount), y los productos comprados (items). Devuelve ÚNICAMENTE un objeto JSON con las claves "storeName" (string), "totalAmount" (número decimal, no string) y "items" (array de strings con nombres de productos). No añadas markdown ni texto adicional.');
+      final imagePart = DataPart('image/jpeg', imageBytes);
 
-      final lines = recognizedText.blocks.expand((b) => b.lines).toList();
+      final response = await model.generateContent([
+        Content.multi([prompt, imagePart])
+      ]);
 
-      // First meaningful line is usually the store name
-      for (var line in lines) {
-        final trimmed = line.text.trim();
-        if (trimmed.length > 3 && !RegExp(r'^\d').hasMatch(trimmed) && !RegExp(r'^\*').hasMatch(trimmed)) {
-          storeName = trimmed.length > 25 ? trimmed.substring(0, 25) : trimmed;
-          break;
-        }
-      }
-
-      // Two-pass strategy:
-      // Pass 1 – look for a line containing TOTAL/IMPORTE and grab its number
-      for (var line in lines) {
-        final upper = line.text.toUpperCase();
-        if (upper.contains('TOTAL') || upper.contains('IMPORTE') || upper.contains('A PAGAR') || upper.contains('AMOUNT')) {
-          final priceMatch = RegExp(r'(\d+[\.,]\d+)').firstMatch(upper);
-          if (priceMatch != null) {
-            final price = double.tryParse(priceMatch.group(1)!.replaceAll(',', '.')) ?? 0.0;
-            if (price > 0 && price < 10000) totalFound = price;
-          }
-        }
-        // Track the largest number as fallback
-        for (var m in RegExp(r'(\d+[\.,]\d+)').allMatches(line.text)) {
-          final price = double.tryParse(m.group(1)!.replaceAll(',', '.')) ?? 0.0;
-          if (price > largestNumber && price < 10000) largestNumber = price;
-        }
-      }
-
-      // Pass 2 – if no TOTAL keyword was found, use the largest number
-      if (totalFound == 0.0 && largestNumber > 0.0) totalFound = largestNumber;
-
-      textRecognizer.close();
+      if (!mounted) return;
       Navigator.pop(context);
 
+      final text = response.text?.trim() ?? '{}';
+      final cleanText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      
+      final Map<String, dynamic> data = jsonDecode(cleanText);
+      final String storeName = data['storeName'] ?? 'Comercio Desconocido';
+      final num? totalAmountNum = data['totalAmount'] as num?;
+      final double totalFound = totalAmountNum?.toDouble() ?? 0.0;
+      final List<dynamic> itemsDynamic = data['items'] ?? [];
+      final List<String> items = itemsDynamic.map((e) => e.toString()).toList();
+
       if (totalFound > 0) {
-        setState(() {
-          AppData.expenses.insert(0, Expense(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            title: storeName,
-            amount: totalFound,
-            date: DateTime.now(),
-            module: 'General',
-            attachedFileName: pickedFile.path.split('/').last,
-          ));
-        });
+        final newExpense = Expense(
+          id: DateTime.now().millisecondsSinceEpoch.toString(), // Temp ID until Supabase returns real UUID
+          title: storeName,
+          amount: totalFound,
+          date: DateTime.now(),
+          module: 'General',
+          attachedFileName: pickedFile.path.split('/').last,
+        );
+        
+        await SupabaseRepository.addExpense(newExpense);
+        
+        if (items.isNotEmpty) {
+           await SupabaseRepository.createShoppingListWithItems('Ticket $storeName', items);
+        }
+
+        setState(() {}); // Refresh UI
+        
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('¡Gasto de ${AppData.currency}${totalFound.toStringAsFixed(2)} añadido automáticamente!'),
+          content: Text('¡Gasto de ${AppData.currency}${totalFound.toStringAsFixed(2)} y productos añadidos!'),
           backgroundColor: const Color(0xFF10B981),
         ));
       } else {
@@ -158,7 +161,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         _showExpenseForm(initialTitle: storeName, attachedFileName: pickedFile.path.split('/').last);
       }
     } catch (e) {
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al analizar la imagen: $e')));
     }
   }
@@ -493,26 +496,26 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           return;
                         }
 
-                        setState(() {
-                          if (existingExpense == null) {
-                            AppData.expenses.insert(
-                              0,
-                              Expense(
-                                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                title: title,
-                                amount: amount,
-                                date: DateTime.now(),
-                                module: selectedModule,
-                                attachedFileName: attachedFile,
-                              ),
-                            );
-                          } else {
-                            existingExpense.title = title;
-                            existingExpense.amount = amount;
-                            existingExpense.module = selectedModule;
-                            existingExpense.attachedFileName = attachedFile;
-                          }
-                        });
+                        if (existingExpense == null) {
+                          final newExp = Expense(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            title: title,
+                            amount: amount,
+                            date: DateTime.now(),
+                            module: selectedModule,
+                            attachedFileName: attachedFile,
+                          );
+                          SupabaseRepository.addExpense(newExp).then((_) {
+                            if (mounted) setState(() {});
+                          });
+                        } else {
+                          existingExpense.title = title;
+                          existingExpense.amount = amount;
+                          existingExpense.module = selectedModule;
+                          existingExpense.attachedFileName = attachedFile;
+                          // TODO: Add Supabase update support
+                          setState(() {});
+                        }
 
                         Navigator.of(context).pop();
                       },
