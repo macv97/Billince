@@ -1,5 +1,6 @@
 import '../models/expense.dart';
 import '../models/shared_group.dart';
+import '../models/checklist_item.dart';
 
 class AppData {
   static String currency = '\$'; // Default currency
@@ -18,4 +19,7 @@ class AppData {
       currency: '€',
     )
   ];
+
+  // Listas de la compra
+  static final List<ShoppingList> shoppingLists = [];
 }

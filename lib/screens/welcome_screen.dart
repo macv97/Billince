@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/app_data.dart';
+import '../data/settings_provider.dart';
 import 'main_menu_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -18,46 +20,102 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.language, color: Colors.blueGrey),
-                title: const Text('Idioma'),
-                trailing: const Text('Español', style: TextStyle(color: Colors.grey)),
-                onTap: () => _showMockSnack('Cambio de idioma próximamente'),
+        return Consumer<SettingsProvider>(
+          builder: (context, settings, child) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  ListTile(
+                    leading: const Icon(Icons.language, color: Colors.blueGrey),
+                    title: const Text('Idioma'),
+                    trailing: DropdownButton<String>(
+                      value: settings.language,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(value: 'es', child: Text('Español')),
+                        DropdownMenuItem(value: 'en', child: Text('English')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) settings.setLanguage(v);
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.dark_mode, color: Colors.indigo),
+                    title: const Text('Tema'),
+                    trailing: DropdownButton<ThemeMode>(
+                      value: settings.themeMode,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(value: ThemeMode.system, child: Text('Automático')),
+                        DropdownMenuItem(value: ThemeMode.light, child: Text('Claro')),
+                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) settings.setThemeMode(v);
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.color_lens, color: Colors.orange),
+                    title: const Text('Colores de Interfaz'),
+                    trailing: DropdownButton<int>(
+                      value: settings.interfaceColor.value,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(value: 0xFF0F172A, child: Text('Midnight Blue')),
+                        DropdownMenuItem(value: 0xFF4B0082, child: Text('Indigo')),
+                        DropdownMenuItem(value: 0xFF800000, child: Text('Maroon')),
+                        DropdownMenuItem(value: 0xFF2F4F4F, child: Text('Slate Gray')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) settings.setInterfaceColor(Color(v));
+                      },
+                    ),
+                  ),
+                  const Divider(),
+                  const Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
+                  ListTile(
+                    leading: const Icon(Icons.visibility, color: Colors.teal),
+                    title: const Text('Modo Daltonismo'),
+                    subtitle: const Text('Ajuste de colores global'),
+                    trailing: DropdownButton<ColorBlindnessMode>(
+                      value: settings.colorBlindnessMode,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(value: ColorBlindnessMode.none, child: Text('Desactivado')),
+                        DropdownMenuItem(value: ColorBlindnessMode.protanopia, child: Text('Protanopia')),
+                        DropdownMenuItem(value: ColorBlindnessMode.deuteranopia, child: Text('Deuteranopia')),
+                        DropdownMenuItem(value: ColorBlindnessMode.tritanopia, child: Text('Tritanopia')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) settings.setColorBlindnessMode(v);
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.text_increase, color: Colors.teal),
+                    title: const Text('Tamaño de Texto'),
+                    subtitle: Slider(
+                      value: settings.textScaleFactor,
+                      min: 1.0,
+                      max: 1.5,
+                      divisions: 5,
+                      label: '${settings.textScaleFactor}',
+                      onChanged: (v) {
+                        settings.setTextScaleFactor(v);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.dark_mode, color: Colors.indigo),
-                title: const Text('Tema'),
-                trailing: const Text('Automático', style: TextStyle(color: Colors.grey)),
-                onTap: () => _showMockSnack('Modo oscuro/claro próximamente'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.color_lens, color: Colors.orange),
-                title: const Text('Colores de Interfaz'),
-                onTap: () => _showMockSnack('Personalización de colores próximamente'),
-              ),
-              const Divider(),
-              const Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
-              ListTile(
-                leading: const Icon(Icons.visibility, color: Colors.teal),
-                title: const Text('Modo Daltonismo'),
-                subtitle: const Text('Protanopia, Deuteranopia, Tritanopia'),
-                trailing: Switch(value: false, onChanged: (v) => _showMockSnack('Filtros de daltonismo en desarrollo')),
-              ),
-              ListTile(
-                leading: const Icon(Icons.text_increase, color: Colors.teal),
-                title: const Text('Tamaño de Texto y Contraste'),
-                onTap: () => _showMockSnack('Ajustes de contraste próximamente'),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            );
+          }
         );
       }
     );

@@ -4,7 +4,7 @@
 
 Billince es una aplicación móvil de gestión financiera personal desarrollada en **Flutter**. Su nombre nace de la fusión entre *Bill* (factura en inglés) y *Lince* (animal con visión aguda), representando el control preciso y la claridad que ofrece sobre tus finanzas.
 
-> 🚧 **Estado:** En desarrollo activo — versión local funcional.
+> 🚧 **Estado:** En desarrollo activo — Versión con ajustes y listas persistentes.
 
 ---
 
@@ -22,55 +22,40 @@ Billince es una aplicación móvil de gestión financiera personal desarrollada 
 
 ## ✨ Funcionalidades
 
-### 1. Pantalla de Bienvenida
-- Inicio de sesión (preparado para futura integración con backend).
-- Opción de **continuar sin iniciar sesión** para uso local.
-- **Selector de moneda global** (€ EUR, $ USD, £ GBP) antes de acceder a la app.
-- Acceso a **Perfil** y **Ajustes** desde iconos inferiores:
-  - Idioma
-  - Tema (claro / oscuro)
-  - Colores de interfaz
-  - **Accesibilidad visual**: modo daltonismo (Protanopia, Deuteranopia, Tritanopia) y ajuste de contraste.
+### 1. Pantalla de Bienvenida y Ajustes
+- **Selector de moneda global** (€ EUR, $ USD, £ GBP) con efecto inmediato en toda la app.
+- **Ajustes y Accesibilidad Reales**:
+  - **Cambio de Idioma**: Preparado para Español/Inglés.
+  - **Tema Dinámico**: Selección entre modo Claro, Oscuro o Automático (Sistema).
+  - **Personalización de Color**: Cambia el color base de la interfaz dinámicamente.
+  - **Accesibilidad Visual**: Filtros activos para daltonismo (Protanopia, Deuteranopia, Tritanopia) mediante matrices de color.
+  - **Tamaño de Texto**: Deslizador para ajustar la escala de fuente en toda la aplicación.
+- **Persistencia de Ajustes**: Las preferencias de usuario se guardan automáticamente.
 
-### 2. Gestión de Gastos
+### 2. Gestión de Gastos Individuales
 - Añadir gastos de forma **manual** o mediante **escaneo de tickets con IA** (simulado).
-- Opciones de escaneo: hacer foto, subir desde galería o adjuntar PDF.
-- Organización por **módulos/categorías** (General, Compras, Transporte, Ocio, etc.).
-- Filtros por **categoría** y por **rango de fechas**.
-- CRUD completo: crear, editar y eliminar gastos.
-- Indicador visual de archivos adjuntos (icono de clip 📎).
-- Eliminación por deslizamiento horizontal (swipe) o icono de papelera.
+- Soporte para adjuntar archivos: foto de cámara, imagen de galería o documentos PDF.
+- Organización por **categorías** con iconos personalizados.
+- Filtros avanzados por categoría y rango de fechas.
+- Gestión de adjuntos con **límite de seguridad de 5 MB**.
 
-### 3. Gastos Compartidos
-- Crear **eventos/grupos** temáticos (ej. "Viaje a Asturias", "Piso Compartido").
-- **Iconos inteligentes** automáticos según el nombre del evento:
-  - ✈️ Viaje → avión
-  - 🍽️ Restaurante → cubiertos
-  - 🏠 Piso → casa
-  - 🎁 Regalo → paquete
-  - 🛒 Compras → carrito
-  - 🚗 Transporte → coche
-- **Moneda independiente por evento** (€ o $), seleccionable al crear el grupo.
-- Gestionar integrantes y editar nombre del grupo desde menú contextual (⋮).
-- Añadir gastos compartidos indicando **quién pagó** y **para quién** es el gasto.
-- Adjuntar facturas/tickets (foto, galería o PDF) con **límite de seguridad de 5 MB**.
-- Editar o eliminar gastos con **long press** o **swipe horizontal**.
-- **Tres pestañas** dentro de cada evento:
-  - **Gastos**: listado completo de gastos del grupo.
-  - **Saldos**: balance por persona y algoritmo de **liquidación inteligente** que minimiza el número de transferencias.
-  - **Archivos**: repositorio de facturas y tickets adjuntados.
-- Pestaña de ayuda **"¿Cómo funciona?"** con explicación del algoritmo de cuadre de cuentas.
+### 3. Gastos Compartidos (Eventos)
+- Crear **grupos de gastos** para viajes, cenas o proyectos comunes.
+- **Iconos inteligentes**: La app asigna automáticamente un icono basado en el nombre del evento (✈️, 🍽️, 🏠, 🛒, etc.).
+- **Moneda por evento**: Cada grupo puede tener su propia moneda (€ o $).
+- **Liquidación Inteligente**: Algoritmo que calcula el balance de saldos y sugiere el número mínimo de transferencias para saldar deudas.
+- **Repositorio de Archivos**: Pestaña dedicada para ver todos los tickets y facturas subidos por el grupo.
 
-### 4. Lista de la Compra
-- Checklist interactiva con checkboxes.
-- Añadir elementos manualmente.
-- **Escaneo con IA**: hacer foto o subir imagen de una lista para que se extraigan los elementos automáticamente (simulado).
-- Eliminación por swipe o icono de papelera.
+### 4. Lista de la Compra (Multi-lista)
+- **Gestión de múltiples listas**: Crea listas independientes para diferentes propósitos (ej. "Compra Semanal", "Barbacoa").
+- **Persistencia de navegación**: Los productos añadidos se mantienen guardados al volver atrás.
+- **Escaneo con IA**: Capacidad para extraer elementos de una lista escrita a mano mediante fotos (simulado).
+- Resumen visual del progreso (ej. "3 de 10 completados") desde la pantalla principal.
 
 ### 5. Resumen y Gráficos
-- Visualización del **gasto total** con filtro por fecha.
-- **Gráfico de barras por categoría** con porcentaje y colores corporativos.
-- Ordenado de mayor a menor gasto.
+- Panel visual con el **gasto total acumulado**.
+- **Gráfico de barras corporativo** que muestra el desglose por categorías.
+- Clasificación automática para detectar los mayores focos de gasto.
 
 ---
 
@@ -78,23 +63,25 @@ Billince es una aplicación móvil de gestión financiera personal desarrollada 
 
 ```
 lib/
-├── main.dart                          # Punto de entrada, tema global
+├── main.dart                          # Punto de entrada, inyección de Provider
 ├── data/
-│   └── app_data.dart                  # Estado global en memoria
+│   ├── app_data.dart                  # Estado global de datos (volátil)
+│   └── settings_provider.dart         # Gestión de ajustes y persistencia local
 ├── models/
 │   ├── expense.dart                   # Modelo de gasto individual
-│   ├── checklist_item.dart            # Modelo de elemento de checklist
+│   ├── checklist_item.dart            # Modelos de Checklist y ShoppingList
 │   ├── shared_expense.dart            # Modelo de gasto compartido
 │   ├── shared_group.dart              # Modelo de grupo/evento compartido
 │   └── shared_file.dart               # Modelo de archivo adjunto
 └── screens/
-    ├── welcome_screen.dart            # Pantalla de bienvenida / login
-    ├── main_menu_screen.dart          # Menú principal con acceso a módulos
-    ├── expenses_screen.dart           # Gestión de gastos individuales
-    ├── shared_expenses_screen.dart    # Lista de eventos compartidos
-    ├── shared_group_detail_screen.dart # Detalle de un evento compartido
-    ├── checklist_screen.dart          # Lista de la compra
-    └── summary_screen.dart            # Resumen y gráficos
+    ├── welcome_screen.dart            # Bienvenida y modal de ajustes
+    ├── main_menu_screen.dart          # Dashboard principal
+    ├── expenses_screen.dart           # Gestión de gastos personales
+    ├── shared_expenses_screen.dart    # Listado de grupos compartidos
+    ├── shared_group_detail_screen.dart # Detalle, saldos y archivos del grupo
+    ├── checklist_screen.dart          # Gestor de listas de compra
+    ├── shopping_list_detail_screen.dart # Vista detallada de una lista específica
+    └── summary_screen.dart            # Análisis gráfico de gastos
 ```
 
 ---
@@ -103,47 +90,29 @@ lib/
 
 | Tecnología | Uso |
 |---|---|
-| **Flutter 3.8+** | Framework multiplataforma |
-| **Dart** | Lenguaje de programación |
-| **Material Design 3** | Sistema de diseño UI |
-| **image_picker** | Acceso a cámara y galería |
-| **flutter_launcher_icons** | Generación de iconos de app |
+| **Flutter 3.8+** | Framework principal |
+| **Provider** | Gestión de estado global de ajustes |
+| **Shared Preferences** | Persistencia de configuraciones de usuario |
+| **Material Design 3** | Sistema de diseño y componentes UI |
+| **image_picker** | Integración con cámara y archivos |
 
 ---
 
 ## 🚀 Cómo Ejecutar
 
-```bash
-# Clonar el repositorio
-git clone <url-del-repositorio>
-cd AICOUNT
-
-# Instalar dependencias
-flutter pub get
-
-# Ejecutar en emulador o dispositivo
-flutter run
-```
+1. Clonar el repositorio.
+2. Ejecutar `flutter pub get` para instalar dependencias.
+3. Asegurarse de tener un emulador Android o dispositivo conectado.
+4. Ejecutar `flutter run`.
 
 ---
 
-## 📋 Hoja de Ruta (Próximas Funcionalidades)
+## 📋 Hoja de Ruta (Próximos Pasos)
 
-- [ ] **Persistencia de datos**: base de datos local con `sqflite` o `hive`.
-- [ ] **Modo oscuro**: implementación completa del tema dark.
-- [ ] **Accesibilidad**: filtros de color para daltonismo funcionales.
-- [ ] **Sincronización en la nube**: Firebase/Supabase para compartir eventos entre usuarios.
-- [ ] **Compartir eventos**: mediante código QR o enlace de invitación.
-- [ ] **OCR real**: integración con API de IA para lectura de tickets y listas reales.
-- [ ] **Notificaciones**: recordatorios de pagos pendientes.
-- [ ] **Exportar datos**: generar informes en PDF o CSV.
-- [ ] **Multiidioma**: soporte para inglés y otros idiomas.
-
----
-
-## 📄 Licencia
-
-Proyecto privado. Todos los derechos reservados.
+- [ ] **Base de Datos Local**: Implementar `sqflite` para persistir gastos y listas de compra de forma permanente.
+- [ ] **Sincronización en la Nube**: Integración con backend para compartir grupos entre usuarios.
+- [ ] **IA Real**: Sustituir las simulaciones por procesamiento de imágenes real (Google ML Kit o similar).
+- [ ] **Notificaciones**: Avisos de deudas pendientes en grupos compartidos.
 
 ---
 

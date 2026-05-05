@@ -9,3 +9,17 @@ class ChecklistItem {
     this.isDone = false,
   });
 }
+
+class ShoppingList {
+  final String id;
+  String title;
+  DateTime dateCreated;
+  List<ChecklistItem> items;
+
+  ShoppingList({
+    required this.id,
+    required this.title,
+    required this.dateCreated,
+    required this.items,
+  });
+}
