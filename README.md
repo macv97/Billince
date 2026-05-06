@@ -109,7 +109,11 @@ Para cumplir con estándares profesionales de seguridad, Billince **no expone AP
 
 ### 🔴 Prioridad Alta (Próximamente)
 - [ ] **[UX]** Incorporación de banner instructivo persistente en el dashboard principal sobre limitaciones funcionales para usuarios no registrados.
-- [ ] **[Auth]** Integración de Google Sign-In real.
+- [ ] **[Auth]** Habilitar acceso con Google (Google Sign-In).
+- [ ] **[Auth]** Acceso con huella dactilar (Biometría) una vez iniciada la sesión, para evitar introducir credenciales cada vez que se abre la app.
+- [ ] **[UX]** Dar funcionalidad completa al icono de "Mi Perfil" al iniciar la aplicación.
+- [ ] **[Branding]** Corregir la discrepancia del icono de lanzamiento de la app (launcher icon) en el móvil para que coincida con el ojo de lince de la interfaz.
+- [ ] **[IA]** Diseñar e implementar soluciones frente al límite de peticiones (429 Rate Limit) de la IA (ej. cola asíncrona, caché de respuestas o rotación de claves).
 - [ ] **[Gastos]** Operaciones de edición (UPDATE) de gastos directamente sincronizados con la nube.
 
 ---

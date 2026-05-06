@@ -174,6 +174,10 @@ Archivo: `lib/data/supabase_repository.dart`
 ### 🔴 Pendiente (Prioridad Alta)
 - **[UX]** Finalizar el texto de aviso en la pantalla de inicio sobre la imposibilidad de usar escaneo de IA en modo offline/invitado.
 - **[Auth]** Implementar Google Sign-In real (actualmente muestra snack "en desarrollo").
+- **[Auth]** Integrar inicio de sesión biométrico / huella dactilar tras la primera autenticación para evitar escribir credenciales continuamente.
+- **[UX]** Activar funcionalidad completa en el botón "Mi Perfil" al iniciar la aplicación.
+- **[Branding]** Homologar el icono de lanzamiento de la app (launcher icon) en dispositivos con el logo circular del ojo de lince de la UI.
+- **[IA]** Diseñar mecanismos de resiliencia ante límites de llamadas 429 de la API (ej. encolamiento asíncrono, caché local de respuestas comunes o rotación inteligente de claves).
 - **[Gastos]** Soporte para actualización (UPDATE) de gastos en Supabase (actualmente solo en local).
 
 ### 🟡 Pendiente (Roadmap)
