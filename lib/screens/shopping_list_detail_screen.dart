@@ -1,11 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/checklist_item.dart';
 import '../data/app_data.dart';
+import '../data/supabase_repository.dart';
 
 class ShoppingListDetailScreen extends StatefulWidget {
   final ShoppingList shoppingList;
@@ -58,6 +57,10 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                   subtitle: const Text('Haz una foto a una lista escrita'),
                   onTap: () {
                     Navigator.pop(context);
+                    if (!SupabaseRepository.isAuthenticated) {
+                      _showLoginRequiredDialog();
+                      return;
+                    }
                     _processImage(ImageSource.camera);
                   },
                 ),
@@ -72,6 +75,10 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                   subtitle: const Text('Selecciona una foto de una lista'),
                   onTap: () {
                     Navigator.pop(context);
+                    if (!SupabaseRepository.isAuthenticated) {
+                      _showLoginRequiredDialog();
+                      return;
+                    }
                     _processImage(ImageSource.gallery);
                   },
                 ),
@@ -143,20 +150,32 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     );
   }
 
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: const Icon(Icons.lock_outline, color: Color(0xFFF59E0B), size: 48),
+        title: const Text('Inicio de sesión necesario'),
+        content: const Text(
+          'Para usar las funciones de escaneo con IA necesitas iniciar sesión con tu cuenta.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── OCR Scan (extracts product names, no prices) ─────────
   Future<void> _processImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
     if (pickedFile == null) return;
-
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    if (apiKey.isEmpty || apiKey == 'PON_AQUI_TU_API_KEY') {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-         content: Text('Error: La API Key de IA no está configurada.'),
-         backgroundColor: Colors.redAccent,
-       ));
-       return;
-    }
 
     showDialog(
       context: context,
@@ -166,31 +185,33 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
         content: const Row(children: [
           CircularProgressIndicator(),
           SizedBox(width: 20),
-          Expanded(child: Text('Analizando lista con Gemini AI...')),
+          Expanded(child: Text('Analizando lista con IA...')),
         ]),
       ),
     );
 
     try {
       final imageBytes = await pickedFile.readAsBytes();
-      
-      final model = GenerativeModel(
-        model: 'gemini-flash-latest',
-        apiKey: apiKey,
+
+      final prompt = 'Analiza esta imagen y extrae una lista de productos para comprar. Ignora los precios, cantidades u otra información adicional, solo devuelve el nombre de los productos. Devuelve ÚNICAMENTE un array JSON de strings. Ejemplo: ["Leche", "Huevos", "Pan"]. No incluyas markdown.';
+
+      final responseText = await SupabaseRepository.callGemini(
+        prompt: prompt,
+        imageBytes: imageBytes,
       );
-
-      final prompt = TextPart('Analiza esta imagen y extrae una lista de productos para comprar. Ignora los precios, cantidades u otra información adicional, solo devuelve el nombre de los productos. Devuelve ÚNICAMENTE un array JSON de strings. Ejemplo: ["Leche", "Huevos", "Pan"]. No incluyas markdown.');
-      final imagePart = DataPart('image/jpeg', imageBytes);
-
-      final response = await model.generateContent([
-        Content.multi([prompt, imagePart])
-      ]);
 
       if (!mounted) return;
       Navigator.pop(context);
 
-      final text = response.text?.trim() ?? '[]';
-      final cleanText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      if (responseText == null || responseText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Error: No se pudo conectar con el servicio de IA.'),
+          backgroundColor: Colors.redAccent,
+        ));
+        return;
+      }
+
+      final cleanText = responseText.replaceAll('```json', '').replaceAll('```', '').trim();
       
       final List<dynamic> jsonList = jsonDecode(cleanText);
       final List<ChecklistItem> extractedItems = [];

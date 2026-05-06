@@ -1,21 +1,81 @@
 import 'package:flutter/material.dart';
 import '../data/app_data.dart';
+import '../data/supabase_repository.dart';
 import '../models/checklist_item.dart';
 
-class ShoppingInsightsScreen extends StatelessWidget {
+class ShoppingInsightsScreen extends StatefulWidget {
   const ShoppingInsightsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // ── Gather stats ─────────────────────────────────────
+  State<ShoppingInsightsScreen> createState() => _ShoppingInsightsScreenState();
+}
+
+class _ShoppingInsightsScreenState extends State<ShoppingInsightsScreen> {
+  String? _aiAdvice;
+  bool _isLoadingAI = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAIAdvice();
+  }
+
+  Future<void> _loadAIAdvice() async {
+    if (!SupabaseRepository.isAuthenticated) {
+      setState(() {
+        _aiAdvice = 'Inicia sesión para recibir consejos personalizados de la IA basados en tus hábitos de compra.';
+      });
+      return;
+    }
+
+    final stats = _gatherStats();
+    if (stats['totalLists'] == 0) {
+      setState(() {
+        _aiAdvice = '¡Bienvenido! Empieza creando tu primera lista de la compra. A medida que vayas comprando, el asistente IA aprenderá tus patrones y te dará consejos personalizados.';
+      });
+      return;
+    }
+
+    setState(() => _isLoadingAI = true);
+
+    final prompt = '''Eres un asistente financiero experto en hábitos de compra llamado "Lince IA Advisor". Analiza estos datos del usuario y da consejos prácticos, personalizados y concretos en español. Sé breve (máximo 4 frases).
+
+Datos del usuario:
+- Total de listas creadas: ${stats['totalLists']}
+- Total de productos añadidos: ${stats['totalProducts']}
+- Productos completados (tachados): ${stats['completedProducts']}
+- Tasa de completado: ${stats['completionRate']}%
+- Día favorito para comprar: ${stats['mostPopularDay']}
+- Productos más repetidos: ${stats['topProductsText']}
+
+Da consejos útiles sobre ahorro, planificación y hábitos de compra basándote en estos datos reales.''';
+
+    try {
+      final response = await SupabaseRepository.callGemini(prompt: prompt);
+      if (mounted) {
+        setState(() {
+          _aiAdvice = response ?? _generateFallbackAdvice(stats);
+          _isLoadingAI = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _aiAdvice = _generateFallbackAdvice(stats);
+          _isLoadingAI = false;
+        });
+      }
+    }
+  }
+
+  Map<String, dynamic> _gatherStats() {
     int totalLists = AppData.shoppingLists.length;
     int totalProducts = 0;
     int completedProducts = 0;
     Map<String, int> productFrequency = {};
-    Map<int, int> shoppingDays = {}; // weekday → count
+    Map<int, int> shoppingDays = {};
 
     for (var list in AppData.shoppingLists) {
-      // Track creation day of week
       final weekday = list.dateCreated.weekday;
       shoppingDays[weekday] = (shoppingDays[weekday] ?? 0) + 1;
 
@@ -30,11 +90,9 @@ class ShoppingInsightsScreen extends StatelessWidget {
       }
     }
 
-    // Top products
     final sortedProducts = productFrequency.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
     final topProducts = sortedProducts.take(5).toList();
 
-    // Most popular shopping day
     String mostPopularDay = '—';
     if (shoppingDays.isNotEmpty) {
       final topDay = shoppingDays.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
@@ -42,11 +100,56 @@ class ShoppingInsightsScreen extends StatelessWidget {
       mostPopularDay = dayNames[topDay] ?? '—';
     }
 
-    // Completion rate
     final completionRate = totalProducts > 0 ? (completedProducts / totalProducts * 100) : 0.0;
 
-    // ── AI Advice ────────────────────────────────────────
-    String aiAdvice = _generateAdvice(topProducts, mostPopularDay, completionRate, totalLists);
+    return {
+      'totalLists': totalLists,
+      'totalProducts': totalProducts,
+      'completedProducts': completedProducts,
+      'completionRate': completionRate.toStringAsFixed(0),
+      'mostPopularDay': mostPopularDay,
+      'topProducts': topProducts,
+      'topProductsText': topProducts.isEmpty ? 'Ninguno aún' : topProducts.take(3).map((e) => e.key).join(', '),
+      'shoppingDays': shoppingDays,
+    };
+  }
+
+  String _generateFallbackAdvice(Map<String, dynamic> stats) {
+    final topProducts = stats['topProducts'] as List<MapEntry<String, int>>;
+    final day = stats['mostPopularDay'] as String;
+    final rate = double.tryParse(stats['completionRate'].toString()) ?? 0;
+    final totalLists = stats['totalLists'] as int;
+
+    if (totalLists == 0) {
+      return '¡Bienvenido! Empieza creando tu primera lista de la compra.';
+    }
+    final buffer = StringBuffer();
+    if (topProducts.isNotEmpty) {
+      buffer.write('Compras "${topProducts.first.key}" con frecuencia. ');
+    }
+    if (day != '—') {
+      buffer.write('Tu día favorito para hacer la compra es el $day. ');
+    }
+    if (rate < 70) {
+      buffer.write('Solo completas un ${rate.toStringAsFixed(0)}% de tus listas — intenta planificar mejor para reducir el desperdicio. ');
+    } else {
+      buffer.write('¡Buen trabajo! Completas el ${rate.toStringAsFixed(0)}% de tus listas. ');
+    }
+    if (topProducts.length >= 3) {
+      buffer.write('Tus básicos son: ${topProducts.take(3).map((e) => e.key).join(", ")}. Busca packs u ofertas para estos productos.');
+    }
+    return buffer.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = _gatherStats();
+    final totalLists = stats['totalLists'] as int;
+    final totalProducts = stats['totalProducts'] as int;
+    final completionRate = double.tryParse(stats['completionRate'].toString()) ?? 0;
+    final mostPopularDay = stats['mostPopularDay'] as String;
+    final topProducts = stats['topProducts'] as List<MapEntry<String, int>>;
+    final shoppingDays = stats['shoppingDays'] as Map<int, int>;
 
     return Scaffold(
       appBar: AppBar(
@@ -60,7 +163,7 @@ class ShoppingInsightsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── AI Advisor Card ──────────────────────────
-            _buildAIAdviceCard(aiAdvice),
+            _buildAIAdviceCard(),
             const SizedBox(height: 24),
 
             // ── Quick Stats ──────────────────────────────
@@ -173,28 +276,6 @@ class ShoppingInsightsScreen extends StatelessWidget {
     );
   }
 
-  String _generateAdvice(List<MapEntry<String, int>> topProducts, String day, double rate, int totalLists) {
-    if (totalLists == 0) {
-      return '¡Bienvenido! Empieza creando tu primera lista de la compra. A medida que vayas comprando, el asistente IA aprenderá tus patrones y te dará consejos personalizados.';
-    }
-    final buffer = StringBuffer();
-    if (topProducts.isNotEmpty) {
-      buffer.write('Compras "${topProducts.first.key}" con frecuencia. ');
-    }
-    if (day != '—') {
-      buffer.write('Tu día favorito para hacer la compra es el $day. ');
-    }
-    if (rate < 70) {
-      buffer.write('Solo completas un ${rate.toStringAsFixed(0)}% de tus listas — intenta planificar mejor para reducir el desperdicio. ');
-    } else {
-      buffer.write('¡Buen trabajo! Completas el ${rate.toStringAsFixed(0)}% de tus listas. ');
-    }
-    if (topProducts.length >= 3) {
-      buffer.write('Tus básicos son: ${topProducts.take(3).map((e) => e.key).join(", ")}. Busca packs u ofertas para estos productos.');
-    }
-    return buffer.toString();
-  }
-
   Widget _buildStatChip(IconData icon, String value, String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
@@ -214,7 +295,7 @@ class ShoppingInsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAIAdviceCard(String advice) {
+  Widget _buildAIAdviceCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -237,16 +318,31 @@ class ShoppingInsightsScreen extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             const Text('Lince IA Advisor', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            if (!_isLoadingAI)
+              GestureDetector(
+                onTap: _loadAIAdvice,
+                child: const Icon(Icons.refresh, color: Colors.white54, size: 20),
+              ),
           ]),
           const SizedBox(height: 16),
-          Text(advice, style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5)),
+          if (_isLoadingAI)
+            const Center(child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: CircularProgressIndicator(color: Color(0xFFF59E0B), strokeWidth: 2),
+            ))
+          else
+            Text(_aiAdvice ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5)),
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-              child: const Text('Beta IA', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              child: Text(
+                SupabaseRepository.isAuthenticated ? 'IA Gemini' : 'Requiere sesión',
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
           ),
         ],

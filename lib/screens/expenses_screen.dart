@@ -2,9 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/expense.dart';
 import '../data/app_data.dart';
 import '../data/supabase_repository.dart';
@@ -35,6 +33,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _scanTicket() {
+    if (!SupabaseRepository.isAuthenticated) {
+      _showLoginRequiredDialog();
+      return;
+    }
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -78,19 +80,32 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: const Icon(Icons.lock_outline, color: Color(0xFFF59E0B), size: 48),
+        title: const Text('Inicio de sesión necesario'),
+        content: const Text(
+          'Para usar las funciones de IA necesitas iniciar sesión con tu cuenta. '
+          'Tus datos se guardarán de forma segura en la nube y no se perderán.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _processTicketReal(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
     if (pickedFile == null) return;
-
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    if (apiKey.isEmpty || apiKey == 'PON_AQUI_TU_API_KEY') {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-         content: Text('Error: La API Key de IA no está configurada.'),
-         backgroundColor: Colors.redAccent,
-       ));
-       return;
-    }
 
     showDialog(
       context: context,
@@ -100,7 +115,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 20),
-            Expanded(child: Text("Analizando ticket con Gemini AI...")),
+            Expanded(child: Text("Analizando ticket con IA...")),
           ],
         ),
       ),
@@ -108,24 +123,26 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
     try {
       final imageBytes = await pickedFile.readAsBytes();
-      
-      final model = GenerativeModel(
-        model: 'gemini-flash-latest',
-        apiKey: apiKey,
+
+      final prompt = 'Analiza este ticket de compra. Extrae el nombre del comercio (storeName), el importe total a pagar (totalAmount), y los productos comprados (items). Devuelve ÚNICAMENTE un objeto JSON con las claves "storeName" (string), "totalAmount" (número decimal, no string) y "items" (array de strings con nombres de productos). No añadas markdown ni texto adicional.';
+
+      final responseText = await SupabaseRepository.callGemini(
+        prompt: prompt,
+        imageBytes: imageBytes,
       );
-
-      final prompt = TextPart('Analiza este ticket de compra. Extrae el nombre del comercio (storeName), el importe total a pagar (totalAmount), y los productos comprados (items). Devuelve ÚNICAMENTE un objeto JSON con las claves "storeName" (string), "totalAmount" (número decimal, no string) y "items" (array de strings con nombres de productos). No añadas markdown ni texto adicional.');
-      final imagePart = DataPart('image/jpeg', imageBytes);
-
-      final response = await model.generateContent([
-        Content.multi([prompt, imagePart])
-      ]);
 
       if (!mounted) return;
       Navigator.pop(context);
 
-      final text = response.text?.trim() ?? '{}';
-      final cleanText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      if (responseText == null || responseText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Error: No se pudo conectar con el servicio de IA.'),
+          backgroundColor: Colors.redAccent,
+        ));
+        return;
+      }
+
+      final cleanText = responseText.replaceAll('```json', '').replaceAll('```', '').trim();
       
       final Map<String, dynamic> data = jsonDecode(cleanText);
       final String storeName = data['storeName'] ?? 'Comercio Desconocido';
@@ -136,7 +153,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
       if (totalFound > 0) {
         final newExpense = Expense(
-          id: DateTime.now().millisecondsSinceEpoch.toString(), // Temp ID until Supabase returns real UUID
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
           title: storeName,
           amount: totalFound,
           date: DateTime.now(),

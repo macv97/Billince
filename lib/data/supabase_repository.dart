@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'app_data.dart';
 import '../models/expense.dart';
 import '../models/checklist_item.dart';
@@ -8,6 +10,7 @@ class SupabaseRepository {
 
   // -- User Session --
   static User? get currentUser => client.auth.currentUser;
+  static bool get isAuthenticated => currentUser != null;
 
   // -- Auth Methods --
   static Future<AuthResponse> signIn(String email, String password) async {
@@ -20,6 +23,9 @@ class SupabaseRepository {
 
   static Future<void> signOut() async {
     await client.auth.signOut();
+    AppData.expenses.clear();
+    AppData.shoppingLists.clear();
+    AppData.currency = '€';
   }
 
   // -- Load User Settings --
@@ -39,7 +45,7 @@ class SupabaseRepository {
         });
       }
     } catch (e) {
-      print('Error loading settings: $e');
+      debugPrint('Error loading settings: $e');
     }
   }
 
@@ -54,7 +60,7 @@ class SupabaseRepository {
         'currency': currency,
       });
     } catch (e) {
-      print('Error updating currency: $e');
+      debugPrint('Error updating currency: $e');
     }
   }
 
@@ -78,7 +84,7 @@ class SupabaseRepository {
         ));
       }
     } catch (e) {
-      print('Error loading expenses: $e');
+      debugPrint('Error loading expenses: $e');
     }
 
     // Load Shopping Lists
@@ -101,7 +107,79 @@ class SupabaseRepository {
         ));
       }
     } catch (e) {
-      print('Error loading lists: $e');
+      debugPrint('Error loading lists: $e');
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // ── GEMINI AI VIA EDGE FUNCTION (Server-side, secure) ────
+  // ──────────────────────────────────────────────────────────
+
+  /// Calls the gemini-proxy Edge Function.
+  /// [prompt] - The text prompt for Gemini.
+  /// [imageBytes] - Optional image bytes for multimodal analysis.
+  /// Returns the raw text response from Gemini, or null on error.
+  static Future<String?> callGemini({
+    required String prompt,
+    Uint8List? imageBytes,
+    String mimeType = 'image/jpeg',
+  }) async {
+    if (!isAuthenticated) return null;
+
+    try {
+      final body = <String, dynamic>{
+        'prompt': prompt,
+      };
+
+      if (imageBytes != null) {
+        body['imageBase64'] = base64Encode(imageBytes);
+        body['mimeType'] = mimeType;
+      }
+
+      debugPrint('[Gemini Proxy] Calling edge function...');
+
+      final response = await client.functions.invoke(
+        'gemini-proxy',
+        body: body,
+      );
+
+      debugPrint('[Gemini Proxy] Status: ${response.status}');
+      debugPrint('[Gemini Proxy] Data type: ${response.data.runtimeType}');
+      debugPrint('[Gemini Proxy] Data: ${response.data}');
+
+      final data = response.data;
+      
+      // Handle string response (needs JSON decode)
+      if (data is String) {
+        try {
+          final parsed = jsonDecode(data);
+          if (parsed is Map && parsed.containsKey('result')) {
+            return parsed['result'] as String?;
+          }
+        } catch (_) {
+          return data; // Return raw string if not JSON
+        }
+      }
+      
+      // Handle map response
+      if (data is Map && data.containsKey('result')) {
+        return data['result'] as String?;
+      }
+      
+      debugPrint('[Gemini Proxy] Unexpected response format');
+      return null;
+    } on FunctionException catch (e) {
+      // Extract the user-friendly error message from the Edge Function
+      final details = e.details;
+      String errorMsg = 'Error del servicio de IA';
+      if (details is Map && details.containsKey('error')) {
+        errorMsg = details['error'].toString();
+      }
+      debugPrint('[Gemini Proxy] FunctionException: $errorMsg');
+      throw Exception(errorMsg);
+    } catch (e) {
+      debugPrint('[Gemini Proxy] Exception: $e');
+      throw Exception('No se pudo conectar con el servicio de IA.');
     }
   }
 
@@ -134,7 +212,7 @@ class SupabaseRepository {
       AppData.expenses.insert(0, savedExpense);
       return savedExpense;
     } catch (e) {
-      print('Error adding expense: $e');
+      debugPrint('Error adding expense: $e');
       return null;
     }
   }
@@ -182,7 +260,7 @@ class SupabaseRepository {
       AppData.shoppingLists.add(newList);
       return newList;
     } catch (e) {
-      print('Error creating shopping list: $e');
+      debugPrint('Error creating shopping list: $e');
       return null;
     }
   }

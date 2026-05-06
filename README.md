@@ -2,9 +2,9 @@
 
 **Visión experta para tus finanzas.**
 
-Billince es una aplicación móvil de gestión financiera personal desarrollada en **Flutter** con backend en **Supabase**. Su nombre nace de la fusión entre *Bill* (factura en inglés) y *Lince* (animal con visión aguda), representando el control preciso y la claridad que ofrece sobre tus finanzas.
+Billince es una aplicación móvil de gestión financiera personal de nivel profesional desarrollada en **Flutter** con backend en **Supabase**. Su nombre nace de la fusión entre *Bill* (factura en inglés) y *Lince* (animal con visión aguda), representando el control preciso, la rapidez y la claridad absoluta que ofrece sobre tus finanzas diarias.
 
-> 🚀 **Estado:** Versión con autenticación real (Supabase Auth), persistencia en PostgreSQL, IA multimodal (Gemini) y análisis de hábitos.
+> 🚀 **Estado Actual:** Versión de alta seguridad con autenticación real, almacenamiento persistente en la nube mediante PostgreSQL con RLS, arquitectura de IA delegada al servidor mediante Supabase Edge Functions y un sofisticado asesor financiero inteligente.
 
 ---
 
@@ -17,148 +17,101 @@ Billince es una aplicación móvil de gestión financiera personal desarrollada 
 | **Color Secundario** | Verde Esmeralda `#10B981` |
 | **Color Fondo** | Crema Ámbar `#FEF3C7` |
 | **Icono** | Ojo estilizado (visión del lince) sobre fondo ámbar |
-| **Tipografía** | Roboto |
+| **Tipografía** | Roboto / Inter |
 
 ---
 
-## ✨ Funcionalidades Principales
+## ✨ Funcionalidades Destacadas
 
-### 1. Autenticación con Supabase
-- **Login / Registro con Email y Contraseña** con validación de formato y control de errores amigable.
-- Tras el login, la app carga automáticamente las preferencias del usuario (moneda) y sus datos (gastos, listas) desde la base de datos en la nube.
-- Alternancia fluida entre modo "Iniciar sesión" y "Registrarse" en un mismo modal.
-- Estructura preparada para **Google Sign-In** (en desarrollo).
-- Opción de continuar sin cuenta (datos volátiles, sin persistencia).
+### 1. Autenticación Robusta con Supabase
+- **Login / Registro con Email y Contraseña** con validación estricta de formatos en tiempo real y retroalimentación de errores sumamente amigable.
+- Carga dinámica de configuraciones (como el símbolo de moneda de preferencia del usuario) y datos (gastos, listas) desde la nube inmediatamente tras la autenticación.
+- Cierre de sesión seguro con limpieza de caché y datos locales temporales para proteger la privacidad.
 
-### 2. Gestión de Gastos con IA Multimodal
-- **Escaneo Inteligente con Gemini**: La IA analiza la imagen del ticket y extrae automáticamente el nombre del comercio, el importe total y la lista de productos comprados.
-- **Doble automatización**: Al escanear un ticket, se crea el gasto y simultáneamente una lista de la compra con todos los productos detectados, todo guardado en la nube.
-- **Moneda Dinámica**: Todo el sistema se adapta a la moneda global escogida (€, $, £) y se sincroniza con la cuenta del usuario.
-- Gastos manuales y soporte de adjuntos (foto del ticket).
+### 2. Gestión de Gastos y Tickets con IA Segura (Server-Side)
+- **Escaneo Inteligente**: La IA analiza de manera asíncrona imágenes de tickets (cámara o galería) extrayendo el comercio, el importe total y el desglose de productos comprados.
+- **Automatización Cruzada**: Un único escaneo genera un registro de gasto en tu panel financiero y crea de forma automática una lista de la compra de verificación con los ítems extraídos.
+- **Arquitectura Segura**: Ningún dato de API ni claves privadas reside en el cliente. La comunicación se realiza mediante una Edge Function en el servidor, garantizando seguridad impenetrable.
 
-### 3. Lista de la Compra y Análisis de IA
-- **Checklist Puro**: Módulo enfocado en la organización previa a la compra. Permite tachar productos en tiempo real.
-- **Escaneo de Listas**: Captura listas escritas a mano o impresas para digitalizarlas usando IA (Gemini).
-- **Lince IA Advisor**: Motor de análisis que estudia tus hábitos de compra y ofrece consejos personalizados.
-- Datos sincronizados con la nube para no perder ninguna lista.
+### 3. Listas de la Compra Inteligentes
+- **Checklist Dinámico**: Creación de listas de compras previas a tu visita al supermercado con posibilidad de marcar o desmarcar ítems en tiempo real.
+- **Digitalización de Listas**: Convierte listas manuscritas o impresas en listas interactivas digitales gracias al escaneo inteligente de Gemini.
 
-### 4. Calendario y Agenda Personal
-- Calendario mensual completo para agendar tareas, pagos o eventos personales.
-- Categorías (Personal, Trabajo, Finanzas, Salud, Otro) con iconos y colores dinámicos.
-- Indicadores visuales de actividad por día.
+### 4. Lince IA Advisor (Análisis Financiero Avanzado)
+- Análisis exhaustivo de tus hábitos de consumo directo en el panel de **Shopping Insights**.
+- **Consejos Personalizados Reales**: Evaluando métricas como volumen de compras, frecuencia por día de la semana, tasa de completado y productos recurrentes, la IA te provee recomendaciones prácticas orientadas al ahorro y optimización presupuestaria.
 
-### 5. Gastos Compartidos
-- Grupos para viajes o cenas comunes.
-- **Liquidación Inteligente**: Algoritmo que calcula quién debe a quién con el mínimo de transferencias.
-
-### 6. Resumen, Gráficos y Accesibilidad
-- **Dashboard Premium**: Total acumulado, media diaria y número de transacciones.
-- **Accesibilidad Total**: Modos para daltonismo (Protanopia, Deuteranopia, Tritanopia) y ajuste de escala de texto dinámico.
-- Temas Claro/Oscuro/Automático y personalización de colores de acento.
+### 5. Agenda y Gastos Compartidos
+- Calendario completo para planificación de vencimientos, cobros o eventos personales con códigos de colores temáticos.
+- Grupos de gastos compartidos con un potente algoritmo de **Liquidación de Deudas** para saldar cuentas comunes con el mínimo de transacciones posibles.
 
 ---
 
-## 🤖 Uso de Inteligencia Artificial (Gemini)
+## 🤖 Arquitectura y Uso de Inteligencia Artificial (Gemini)
 
-Billince integra la API de **Google Gemini** (`gemini-flash-latest`) para realizar análisis multimodal de imágenes. La IA nunca se invoca en segundo plano: **siempre es el usuario quien la activa** mediante un botón de escaneo.
-
-### ¿Cuándo se usa?
-
-| Acción | ¿Qué hace la IA? | Resultado |
-|---|---|---|
-| **Escanear ticket de compra** (en Gestión de Gastos) | Lee el ticket y extrae: nombre del comercio, importe total y lista de productos | Crea un gasto + una lista de la compra en tu cuenta |
-| **Escanear lista escrita** (en Lista de la Compra) | Lee una lista escrita a mano o impresa | Digitaliza los productos como ítems del checklist |
-
-### Flujo de un escaneo de ticket:
-```
-📷 Usuario escanea ticket
-        ↓
-🧠 Gemini analiza la imagen (modelo multimodal)
-        ↓
-📦 JSON: { storeName, totalAmount, items[] }
-        ↓
-    ┌───────────────────────────────┐
-    │                               │
-💶 Gasto añadido              🛒 Lista creada
-   en tu cuenta                con los productos
-   (Supabase)                  del ticket (Supabase)
-```
-
-> ⚠️ **Nota:** La IA requiere conexión a internet. Si usas la app sin iniciar sesión, los datos analizados se guardan solo de forma temporal y se perderán al cerrar la app.
-
----
-
-## 🏗️ Arquitectura del Proyecto
+Para cumplir con estándares profesionales de seguridad, Billince **no expone API keys en la aplicación cliente**. Toda interacción con Google Gemini se realiza delegando la lógica al backend.
 
 ```
-lib/
-├── main.dart                              # Punto de entrada: init dotenv + Supabase + Provider
-├── data/
-│   ├── app_data.dart                      # Caché local de datos (gastos, listas, eventos)
-│   ├── settings_provider.dart             # Persistencia de ajustes UI (Shared Preferences)
-│   └── supabase_repository.dart           # Capa de acceso a datos (Supabase Auth + DB)
-├── models/
-│   ├── expense.dart                       # Modelo de gasto personal
-│   ├── checklist_item.dart                # Modelos de listas de compra
-│   ├── calendar_event.dart                # Modelo de eventos de agenda
-│   └── shared_group.dart                  # Modelos de gastos compartidos
-└── screens/
-    ├── welcome_screen.dart                # Auth (Login/Registro), moneda y ajustes
-    ├── expenses_screen.dart               # Gastos + escaneo IA + Supabase
-    ├── shopping_list_detail_screen.dart   # Checklist inteligente + escaneo IA
-    ├── shopping_insights_screen.dart      # Análisis de hábitos por IA
-    ├── calendar_screen.dart               # Agenda y calendario
-    ├── summary_screen.dart                # Dashboard de estadísticas
-    └── shared_expenses_screen.dart        # Grupos y gastos compartidos
+📱 CLip/App (Flutter)
+     │
+     │ 1. Envía prompt, imagen y JWT token de sesión
+     ▼
+🌐 Supabase Edge Function (Deno) ── [Valida JWT del usuario]
+     │
+     │ 2. Adjunta GEMINI_API_KEY (Guardada segura como Secreto de Servidor)
+     ▼
+🧠 Google Gemini API (gemini-2.0-flash)
+     │
+     │ 3. Procesa y devuelve JSON estructurado
+     ▼
+📱 App recibe datos limpios y seguros
 ```
+
+### Reglas de Acceso e IA Gated
+*   **Gated AI**: Las funciones de IA consumen recursos del servidor. Para evitar abusos y costos innecesarios, **las operaciones de escaneo IA están bloqueadas para usuarios invitados**. Si intentas acceder sin cuenta, la aplicación mostrará una ventana emergente explicativa con candado para invitarte a iniciar sesión.
+*   **Manejo Inteligente de Errores**: Se interpretan de forma avanzada los códigos de respuesta del servidor (como el límite de cuota superado o error de red 429) proporcionando advertencias claras al usuario en español en lugar de colapsos inesperados.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-| Tecnología | Uso |
-|---|---|
-| **Flutter 3.x** | Framework móvil multiplataforma |
-| **Supabase** | Autenticación, base de datos PostgreSQL y RLS |
-| **Google Gemini API** | IA multimodal para análisis de tickets y listas |
-| **Provider** | Gestión de estado global (ajustes UI) |
-| **flutter_dotenv** | Gestión segura de variables de entorno (API Keys) |
-| **Shared Preferences** | Persistencia local de configuraciones de UI |
-| **Image Picker** | Acceso a cámara y galería de fotos |
+| Componente | Tecnología | Propósito |
+|---|---|---|
+| **Frontend** | Flutter 3.x / Dart | Aplicación móvil multiplataforma fluida con Material 3. |
+| **Backend** | Supabase | Proveedor de Backend-as-a-Service (BaaS). |
+| **Base de Datos** | PostgreSQL | Almacenamiento seguro relacional con políticas de RLS. |
+| **Serverless IA** | Supabase Edge Functions (Deno) | Middleware seguro para interactuar con la API de Gemini. |
+| **Inteligencia Artificial** | Google Gemini (2.0 Flash) | Procesamiento multimodal de imágenes y análisis cognitivo de datos. |
+| **Gestión de Estado** | Provider | Control dinámico del flujo de configuraciones de accesibilidad. |
 
 ---
 
-## 🔒 Seguridad
+## 🔒 Directrices de Seguridad Aplicadas
 
-- Las API Keys (Gemini y Supabase) se almacenan en un archivo `.env` **excluido del repositorio Git** (`.gitignore`).
-- Supabase aplica **Row Level Security (RLS)** en todas las tablas: cada usuario solo puede ver y modificar sus propios datos.
-- La autenticación usa **JWT tokens** gestionados automáticamente por `supabase_flutter`.
+1.  **Cero Exposición de Keys**: Las API keys de Gemini y de servicio no existen en el código compilado.
+2.  **Políticas RLS en PostgreSQL**: Cada consulta a la base de datos está protegida a nivel de fila (`Row Level Security`), asegurando que ningún usuario pueda visualizar ni alterar la información de otra persona.
+3.  **Validación de JWT**: La Edge Function requiere el token de portador (Bearer Token) del usuario firmante para dar acceso a Gemini.
+4.  **Sanitización de Consultas**: Uso exclusivo del SDK oficial parametrizado de Supabase para erradicar cualquier riesgo de SQL Injection.
 
 ---
 
-## 📋 Hoja de Ruta
+## 📋 Estado del Proyecto y Roadmap
 
 ### ✅ Completado
-- [x] Autenticación real con Email/Contraseña (Supabase Auth)
-- [x] Persistencia en PostgreSQL (expenses, shopping_lists, checklist_items, user_settings)
-- [x] Row Level Security por usuario en todas las tablas
-- [x] Integración Gemini multimodal para tickets y listas
-- [x] Flujo inteligente: ticket → gasto + lista de productos automática
-- [x] Control de errores de autenticación con mensajes amigables
-- [x] API Keys seguras en `.env`
+- [x] Arquitectura de IA 100% segura mediante Edge Functions en el servidor.
+- [x] Ocultación total de la API Key de Gemini del código cliente móvil.
+- [x] Validación del token de sesión (JWT) en el servidor de IA para evitar abusos.
+- [x] Diálogos de bloqueo interactivos (Gated AI) para usuarios sin sesión.
+- [x] Conversión del Lince IA Advisor a consumos reales e interactivos a través del proxy.
+- [x] Gestión inteligente de respuestas de error de API y Rate Limits (429).
+- [x] Autenticación real por Email y Contraseña (Supabase Auth).
+- [x] Políticas de Row Level Security (RLS) habilitadas en producción.
 
-### 🔴 Pendiente (Prioridad Alta)
-- [ ] **[UX]** Mostrar aviso en la pantalla de inicio explicando que sin cuenta las funciones de IA no persistirán los datos entre sesiones.
-- [ ] **[Auth]** Implementar Google Sign-In real.
-- [ ] **[Gastos]** Soporte UPDATE de gastos en Supabase.
-
-### 🟡 Futuras Implementaciones
-- [ ] **Clasificación Automática**: IA que categorice gastos según el nombre del comercio.
-- [ ] **Widget de Escritorio**: Mostrar eventos del día y presupuesto en el Home Screen.
-- [ ] **Lince IA Predictivo**: Predicción de saldo basada en meses anteriores.
-- [ ] **Edge Function Supabase**: Mover la llamada a Gemini al servidor para seguridad máxima de la API Key.
-- [ ] **Gastos Compartidos en la Nube**: Sincronización en tiempo real vía Supabase Realtime.
+### 🔴 Prioridad Alta (Próximamente)
+- [ ] **[UX]** Incorporación de banner instructivo persistente en el dashboard principal sobre limitaciones funcionales para usuarios no registrados.
+- [ ] **[Auth]** Integración de Google Sign-In real.
+- [ ] **[Gastos]** Operaciones de edición (UPDATE) de gastos directamente sincronizados con la nube.
 
 ---
 
-> *Billince — Porque gestionar tu dinero requiere la agudeza de un lince.* 🐱‍👤
+> *Billince — Gestiona tu dinero con la precisión y la agudeza visual de un lince.* 🐱‍👤
