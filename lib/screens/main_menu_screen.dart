@@ -21,7 +21,7 @@ class MainMenuScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(color: Color(0xFFF59E0B), shape: BoxShape.circle),
-              child: const Icon(Icons.visibility, color: Color(0xFF0F172A), size: 20),
+              child: Icon(Icons.visibility, color: colorScheme.primary, size: 20),
             ),
             const SizedBox(width: 10),
             Text(

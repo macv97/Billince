@@ -355,9 +355,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                     // LOGO: Lynx + Bill Concept
                     Container(
                       width: 120,
@@ -443,6 +445,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
               ),
             ),
+          ),
             
             // Bottom Submenu (Profile & Settings)
             Container(
