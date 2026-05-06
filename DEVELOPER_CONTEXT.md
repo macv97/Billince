@@ -4,6 +4,17 @@ Este archivo sirve como memoria técnica y manual de identidad para Billince. Su
 
 ---
 
+## 🛠️ Metodología de Trabajo y Filosofía de Desarrollo (UX & Arquitectura)
+Como desarrollador principal de aplicaciones móviles con enfoque experto en **Arquitectura de Software** y **Experiencia de Usuario (UX)**, todo trabajo realizado en Billince debe regirse por los siguientes pilares:
+
+1. **Entendimiento Absoluto del Flujo de Negocio**: Antes de tocar una sola línea de código para cualquier funcionalidad, el agente debe comprender el ciclo de vida de los datos, el estado global (`AppData`, `SettingsProvider`), y cómo impacta el cambio a los módulos relacionados. No se permite programar de forma aislada.
+2. **UX Fluida y Resiliencia en Casos de Uso**: Queda estrictamente prohibido introducir flujos que provoquen un bloqueo ("parón") o confusión en la experiencia de usuario. 
+   - Cualquier pantalla debe manejar estados de carga (`CircularProgressIndicator`), estados vacíos informativos (`empty states` ilustrados) y capturas controladas de excepciones con mensajes amigables al usuario (nada de errores técnicos crudos o pantallas congeladas).
+   - Ante fallos de conexión (como límites de cuota de IA superados o desconexión de red), la app debe responder de manera elegante con un fallback inmediato (ej. permitir entrada manual o datos locales autogenerados) sin interrumpir la experiencia de usuario.
+3. **Robustez Arquitectónica (Clean Code)**: Separación clara entre la UI (Widgets), lógica de estado (Providers/Stateful) y la capa de acceso a datos (`SupabaseRepository`, `AppData`). Evitar mezclar lógica de negocio directamente en los métodos `build`.
+
+---
+
 ## 💎 Identidad de Marca y Branding
 *   **Nombre:** Billince (Fusión de *Bill* -factura- y *Lince* -animal de visión aguda-).
 *   **Concepto:** Visión experta y precisión en las finanzas personales.
