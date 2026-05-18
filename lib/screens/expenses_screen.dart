@@ -555,19 +555,25 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gastos'),
+        title: const Text('Gastos', style: TextStyle(fontWeight: FontWeight.w800)),
+        centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.date_range),
-          tooltip: 'Filtrar por fecha',
+        leadingWidth: 90,
+        leading: TextButton.icon(
+          icon: const Icon(Icons.date_range_rounded, size: 18),
+          label: const Text('Filtro', style: TextStyle(fontSize: 12)),
           onPressed: _pickDateRange,
+          style: TextButton.styleFrom(padding: EdgeInsets.zero),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Añadir gasto manual',
-            onPressed: () => _showExpenseForm(),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: TextButton.icon(
+              icon: const Icon(Icons.edit_note_rounded, size: 20),
+              label: const Text('Manual'),
+              onPressed: () => _showExpenseForm(),
+            ),
           ),
         ],
       ),

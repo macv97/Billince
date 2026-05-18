@@ -6,6 +6,9 @@ import '../models/shared_file.dart';
 import '../data/app_data.dart';
 import '../data/supabase_repository.dart';
 import 'welcome_screen.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class SharedGroupDetailScreen extends StatefulWidget {
   final SharedExpenseGroup group;
@@ -275,6 +278,88 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                 child: const Text('Guardar'),
               ),
               const SizedBox(height: 20),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  void _showShareModal() {
+    final link = 'https://billince.app/join/${widget.group.id}';
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10))),
+              const SizedBox(height: 24),
+              const Text('Invitar al Grupo', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text('Escanea el QR o comparte el enlace:', style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 14)),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, spreadRadius: 5)],
+                ),
+                child: QrImageView(
+                  data: link,
+                  version: QrVersions.auto,
+                  size: 200.0,
+                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF0F172A)),
+                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Color(0xFF0F172A)),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        side: BorderSide(color: primaryColor, width: 2),
+                      ),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: link));
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enlace copiado al portapapeles')));
+                      },
+                      icon: Icon(Icons.copy_rounded, color: primaryColor),
+                      label: Text('Copiar Link', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Share.share('¡Únete a mi grupo "${widget.group.title}" en Billince para compartir gastos!\n$link');
+                      },
+                      icon: const Icon(Icons.share_rounded),
+                      label: const Text('Compartir', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         );
@@ -624,9 +709,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                     )
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Generando enlace para ${widget.group.title}...'))
-                  );
+                  _showShareModal();
                 }
               }
               if (value == 'members') _showManageMembersSheet();

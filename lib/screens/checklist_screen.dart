@@ -82,8 +82,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             child: TextButton.icon(
-              icon: Icon(Icons.insights_rounded, color: primaryColor, size: 20),
-              label: Text('Insights', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+              icon: Icon(Icons.bar_chart_rounded, color: primaryColor, size: 20),
+              label: Text('Estadísticas', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
               style: TextButton.styleFrom(
                 backgroundColor: primaryColor.withOpacity(0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

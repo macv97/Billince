@@ -9,8 +9,7 @@ class ShoppingInsightsScreen extends StatefulWidget {
 }
 
 class _ShoppingInsightsScreenState extends State<ShoppingInsightsScreen> {
-  String? _aiAdvice;
-  bool _isLoadingAI = false;
+  String? _consejosText;
 
   @override
   void initState() {
@@ -22,12 +21,12 @@ class _ShoppingInsightsScreenState extends State<ShoppingInsightsScreen> {
     final stats = _gatherStats();
     if (stats['totalLists'] == 0) {
       setState(() {
-        _aiAdvice = '¡Bienvenido! Empieza creando tu primera lista de la compra. A medida que vayas comprando, el asistente aprenderá tus patrones y te dará consejos personalizados.';
+        _consejosText = '¡Bienvenido! Empieza creando tu primera lista de la compra. A medida que vayas comprando, te daremos consejos personalizados.';
       });
       return;
     }
     setState(() {
-      _aiAdvice = _generateFallbackAdvice(stats);
+      _consejosText = _generateFallbackAdvice(stats);
     });
   }
 
@@ -116,9 +115,10 @@ class _ShoppingInsightsScreenState extends State<ShoppingInsightsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Análisis de Compras'),
-        backgroundColor: const Color(0xFFFEF3C7),
+        title: const Text('Estadísticas de Compra', style: TextStyle(fontWeight: FontWeight.w800)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -276,26 +276,14 @@ class _ShoppingInsightsScreenState extends State<ShoppingInsightsScreen> {
           Row(children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: const Color(0xFFF59E0B).withOpacity(0.2), shape: BoxShape.circle),
-              child: const Icon(Icons.auto_awesome, color: Color(0xFFF59E0B), size: 24),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withOpacity(0.2), shape: BoxShape.circle),
+              child: Icon(Icons.lightbulb_outline_rounded, color: Theme.of(context).colorScheme.primaryContainer, size: 24),
             ),
             const SizedBox(width: 12),
-            const Text('Lince IA Advisor', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-            const Spacer(),
-            if (!_isLoadingAI)
-              GestureDetector(
-                onTap: _loadAIAdvice,
-                child: const Icon(Icons.refresh, color: Colors.white54, size: 20),
-              ),
+            const Text('Consejos de Compra', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 16),
-          if (_isLoadingAI)
-            const Center(child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: CircularProgressIndicator(color: Color(0xFFF59E0B), strokeWidth: 2),
-            ))
-          else
-            Text(_aiAdvice ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5)),
+          Text(_consejosText ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5)),
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,

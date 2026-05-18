@@ -28,88 +28,90 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  ListTile(
-                    leading: const Icon(Icons.language, color: Colors.blueGrey),
-                    title: const Text('Idioma'),
-                    trailing: DropdownButton<String>(
+                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  _buildCenteredSetting(
+                    icon: Icons.language,
+                    color: Colors.blueGrey,
+                    title: 'Idioma',
+                    child: DropdownButton<String>(
                       value: settings.language,
                       underline: const SizedBox(),
+                      alignment: Alignment.center,
                       items: const [
                         DropdownMenuItem(value: 'es', child: Text('Español')),
                         DropdownMenuItem(value: 'en', child: Text('English')),
                       ],
-                      onChanged: (v) {
-                        if (v != null) settings.setLanguage(v);
-                      },
+                      onChanged: (v) { if (v != null) settings.setLanguage(v); },
                     ),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.dark_mode, color: Colors.indigo),
-                    title: const Text('Tema'),
-                    trailing: DropdownButton<ThemeMode>(
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.dark_mode,
+                    color: Colors.indigo,
+                    title: 'Tema Visual',
+                    child: DropdownButton<ThemeMode>(
                       value: settings.themeMode,
                       underline: const SizedBox(),
+                      alignment: Alignment.center,
                       items: const [
                         DropdownMenuItem(value: ThemeMode.system, child: Text('Automático')),
                         DropdownMenuItem(value: ThemeMode.light, child: Text('Claro')),
                         DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
                       ],
-                      onChanged: (v) {
-                        if (v != null) settings.setThemeMode(v);
-                      },
+                      onChanged: (v) { if (v != null) settings.setThemeMode(v); },
                     ),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.color_lens, color: Colors.orange),
-                    title: const Text('Colores de Interfaz'),
-                    trailing: DropdownButton<int>(
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.color_lens,
+                    color: Colors.orange,
+                    title: 'Color Principal',
+                    child: DropdownButton<int>(
                       value: settings.interfaceColor.value,
                       underline: const SizedBox(),
+                      alignment: Alignment.center,
                       items: const [
                         DropdownMenuItem(value: 0xFF0F172A, child: Text('Midnight Blue')),
                         DropdownMenuItem(value: 0xFF4B0082, child: Text('Indigo')),
                         DropdownMenuItem(value: 0xFF800000, child: Text('Maroon')),
                         DropdownMenuItem(value: 0xFF2F4F4F, child: Text('Slate Gray')),
                       ],
-                      onChanged: (v) {
-                        if (v != null) settings.setInterfaceColor(Color(v));
-                      },
+                      onChanged: (v) { if (v != null) settings.setInterfaceColor(Color(v)); },
                     ),
                   ),
-                  const Divider(),
-                  const Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
-                  ListTile(
-                    leading: const Icon(Icons.visibility, color: Colors.teal),
-                    title: const Text('Modo Daltonismo'),
-                    subtitle: const Text('Ajuste de colores global'),
-                    trailing: DropdownButton<ColorBlindnessMode>(
+                  const Divider(height: 32),
+                  const Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal), textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.visibility,
+                    color: Colors.teal,
+                    title: 'Modo Daltonismo',
+                    child: DropdownButton<ColorBlindnessMode>(
                       value: settings.colorBlindnessMode,
                       underline: const SizedBox(),
+                      alignment: Alignment.center,
                       items: const [
                         DropdownMenuItem(value: ColorBlindnessMode.none, child: Text('Desactivado')),
                         DropdownMenuItem(value: ColorBlindnessMode.protanopia, child: Text('Protanopia')),
                         DropdownMenuItem(value: ColorBlindnessMode.deuteranopia, child: Text('Deuteranopia')),
                         DropdownMenuItem(value: ColorBlindnessMode.tritanopia, child: Text('Tritanopia')),
                       ],
-                      onChanged: (v) {
-                        if (v != null) settings.setColorBlindnessMode(v);
-                      },
+                      onChanged: (v) { if (v != null) settings.setColorBlindnessMode(v); },
                     ),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.text_increase, color: Colors.teal),
-                    title: const Text('Tamaño de Texto'),
-                    subtitle: Slider(
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.text_increase,
+                    color: Colors.teal,
+                    title: 'Tamaño de Texto',
+                    child: Slider(
                       value: settings.textScaleFactor,
                       min: 1.0,
                       max: 1.5,
                       divisions: 5,
                       label: '${settings.textScaleFactor}',
-                      onChanged: (v) {
-                        settings.setTextScaleFactor(v);
-                      },
+                      onChanged: (v) { settings.setTextScaleFactor(v); },
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -470,7 +472,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Visión experta para tus finanzas',
+                      'Tu control de gastos, simple y claro',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.blueGrey.shade300,
@@ -542,6 +545,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCenteredSetting({required IconData icon, required Color color, required String title, required Widget child}) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        child,
+      ],
     );
   }
 }
