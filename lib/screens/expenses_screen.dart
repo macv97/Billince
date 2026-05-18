@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/expense.dart';
@@ -501,15 +500,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               children: [
                 const Text(
                   'Total (según filtros)',
-                  style: TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '${AppData.currency}${_totalBalance.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 56,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
                 ),
               ],
@@ -521,7 +520,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Filtro por Categoría:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
+                const Text('Filtro por Categoría:', style: TextStyle(fontWeight: FontWeight.bold)),
                 TextButton.icon(
                   icon: const Icon(Icons.settings, size: 16),
                   label: const Text('Gestionar'),

@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
 
 /// Supabase repository — ONLY for shared/collaborative expenses.
 /// Personal data (expenses, shopping lists, calendar) lives in local SQLite.

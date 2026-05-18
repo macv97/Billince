@@ -108,12 +108,14 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
             onPressed: () {
               final title = controller.text.trim();
               if (title.isNotEmpty) {
+                final newItem = ChecklistItem(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  title: title,
+                );
                 setState(() {
-                  widget.shoppingList.items.insert(0, ChecklistItem(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: title,
-                  ));
+                  widget.shoppingList.items.insert(0, newItem);
                 });
+                LocalDatabase.insertChecklistItem(newItem, widget.shoppingList.id);
               }
               Navigator.pop(context);
             },
@@ -129,6 +131,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     setState(() {
       widget.shoppingList.items[index].isDone = !widget.shoppingList.items[index].isDone;
     });
+    LocalDatabase.updateChecklistItem(widget.shoppingList.items[index], widget.shoppingList.id);
   }
 
   void _deleteItem(String id) {
