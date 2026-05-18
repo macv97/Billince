@@ -31,7 +31,7 @@ class MainMenuScreen extends StatelessWidget {
           ],
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.primary),
       ),

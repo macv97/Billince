@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/app_data.dart';
+import '../data/local_database.dart';
 import '../models/checklist_item.dart';
 import 'shopping_list_detail_screen.dart';
 import 'shopping_insights_screen.dart';
@@ -39,14 +40,16 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             onPressed: () {
               final title = controller.text.trim();
               if (title.isNotEmpty) {
+                final newList = ShoppingList(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  title: title,
+                  dateCreated: DateTime.now(),
+                  items: [],
+                );
                 setState(() {
-                  AppData.shoppingLists.insert(0, ShoppingList(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: title,
-                    dateCreated: DateTime.now(),
-                    items: [],
-                  ));
+                  AppData.shoppingLists.insert(0, newList);
                 });
+                LocalDatabase.insertShoppingList(newList);
               }
               Navigator.pop(context);
             },
@@ -59,6 +62,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   void _deleteList(ShoppingList list) {
     setState(() => AppData.shoppingLists.remove(list));
+    LocalDatabase.deleteShoppingList(list.id);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lista eliminada')));
   }
 

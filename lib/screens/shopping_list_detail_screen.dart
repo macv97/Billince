@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:convert';
 import '../models/checklist_item.dart';
-import '../data/app_data.dart';
-import '../data/supabase_repository.dart';
+import '../data/local_database.dart';
+import '../services/ticket_scanner.dart';
 
 class ShoppingListDetailScreen extends StatefulWidget {
   final ShoppingList shoppingList;
@@ -57,10 +55,6 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                   subtitle: const Text('Haz una foto a una lista escrita'),
                   onTap: () {
                     Navigator.pop(context);
-                    if (!SupabaseRepository.isAuthenticated) {
-                      _showLoginRequiredDialog();
-                      return;
-                    }
                     _processImage(ImageSource.camera);
                   },
                 ),
@@ -68,17 +62,13 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                     child: const Icon(Icons.photo_library_outlined, color: Color(0xFF10B981)),
                   ),
                   title: const Text('Subir imagen de galería', style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: const Text('Selecciona una foto de una lista'),
                   onTap: () {
                     Navigator.pop(context);
-                    if (!SupabaseRepository.isAuthenticated) {
-                      _showLoginRequiredDialog();
-                      return;
-                    }
                     _processImage(ImageSource.gallery);
                   },
                 ),
@@ -145,36 +135,16 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     setState(() {
       widget.shoppingList.items.removeWhere((item) => item.id == id);
     });
+    LocalDatabase.deleteChecklistItem(id);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Elemento eliminado'), duration: Duration(seconds: 1)),
     );
   }
 
-  void _showLoginRequiredDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        icon: const Icon(Icons.lock_outline, color: Color(0xFFF59E0B), size: 48),
-        title: const Text('Inicio de sesión necesario'),
-        content: const Text(
-          'Para usar las funciones de escaneo con IA necesitas iniciar sesión con tu cuenta.',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── OCR Scan (extracts product names, no prices) ─────────
+  // ── OCR Scan (local ML Kit, extracts product names) ─────────
   Future<void> _processImage(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 90);
     if (pickedFile == null) return;
 
     showDialog(
@@ -185,50 +155,32 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
         content: const Row(children: [
           CircularProgressIndicator(),
           SizedBox(width: 20),
-          Expanded(child: Text('Analizando lista con IA...')),
+          Expanded(child: Text('Escaneando lista localmente...')),
         ]),
       ),
     );
 
     try {
-      final imageBytes = await pickedFile.readAsBytes();
-
-      final prompt = 'Analiza esta imagen y extrae una lista de productos para comprar. Ignora los precios, cantidades u otra información adicional, solo devuelve el nombre de los productos. Devuelve ÚNICAMENTE un array JSON de strings. Ejemplo: ["Leche", "Huevos", "Pan"]. No incluyas markdown.';
-
-      final responseText = await SupabaseRepository.callGemini(
-        prompt: prompt,
-        imageBytes: imageBytes,
-      );
+      final productNames = await TicketScanner.scanShoppingList(pickedFile.path);
 
       if (!mounted) return;
       Navigator.pop(context);
 
-      if (responseText == null || responseText.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Error: No se pudo conectar con el servicio de IA.'),
-          backgroundColor: Colors.redAccent,
-        ));
-        return;
-      }
+      if (productNames.isNotEmpty) {
+        final newItems = productNames.map((name) => ChecklistItem(
+          id: '${DateTime.now().microsecondsSinceEpoch}_${name.hashCode}',
+          title: name,
+        )).toList();
 
-      final cleanText = responseText.replaceAll('```json', '').replaceAll('```', '').trim();
-      
-      final List<dynamic> jsonList = jsonDecode(cleanText);
-      final List<ChecklistItem> extractedItems = [];
-      
-      for (var item in jsonList) {
-        if (item is String && item.isNotEmpty) {
-          extractedItems.add(ChecklistItem(
-            id: '${DateTime.now().millisecondsSinceEpoch}${extractedItems.length}',
-            title: item,
-          ));
+        setState(() => widget.shoppingList.items.insertAll(0, newItems));
+
+        // Persist to SQLite
+        for (final item in newItems) {
+          LocalDatabase.insertChecklistItem(item, widget.shoppingList.id);
         }
-      }
 
-      if (extractedItems.isNotEmpty) {
-        setState(() => widget.shoppingList.items.insertAll(0, extractedItems));
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('¡${extractedItems.length} productos detectados!'),
+          content: Text('¡${newItems.length} productos detectados!'),
           backgroundColor: const Color(0xFF10B981),
         ));
       } else {
@@ -236,7 +188,9 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 

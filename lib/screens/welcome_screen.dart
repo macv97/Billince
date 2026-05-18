@@ -207,8 +207,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             } else {
                               await SupabaseRepository.signUp(email, password);
                             }
-                            await SupabaseRepository.loadUserSettings();
-                            await SupabaseRepository.loadInitialData();
                             if (mounted) {
                               Navigator.pop(ctx);
                               Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainMenuScreen()));

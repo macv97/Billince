@@ -2,10 +2,11 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:convert';
 import '../models/expense.dart';
+import '../models/checklist_item.dart';
 import '../data/app_data.dart';
-import '../data/supabase_repository.dart';
+import '../data/local_database.dart';
+import '../services/ticket_scanner.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -33,10 +34,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _scanTicket() {
-    if (!SupabaseRepository.isAuthenticated) {
-      _showLoginRequiredDialog();
-      return;
-    }
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -53,7 +50,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 title: const Text('Hacer una Foto'),
                 onTap: () {
                   Navigator.pop(context);
-                  _processTicketReal(ImageSource.camera);
+                  _processTicketLocal(ImageSource.camera);
                 },
               ),
               ListTile(
@@ -61,16 +58,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 title: const Text('Subir desde Galería'),
                 onTap: () {
                   Navigator.pop(context);
-                  _processTicketReal(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                title: const Text('Subir Archivo PDF'),
-                subtitle: const Text('Max 5MB'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _processTicketSimulation('Factura_Digital.pdf');
+                  _processTicketLocal(ImageSource.gallery);
                 },
               ),
             ],
@@ -80,31 +68,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
-  void _showLoginRequiredDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        icon: const Icon(Icons.lock_outline, color: Color(0xFFF59E0B), size: 48),
-        title: const Text('Inicio de sesión necesario'),
-        content: const Text(
-          'Para usar las funciones de IA necesitas iniciar sesión con tu cuenta. '
-          'Tus datos se guardarán de forma segura en la nube y no se perderán.',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _processTicketReal(ImageSource source) async {
+  /// Process ticket using 100% local ML Kit OCR + post-OCR algorithm.
+  Future<void> _processTicketLocal(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 90);
     if (pickedFile == null) return;
 
     showDialog(
@@ -115,145 +82,84 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 20),
-            Expanded(child: Text("Analizando ticket con IA...")),
+            Expanded(child: Text('Analizando ticket localmente...')),
           ],
         ),
       ),
     );
 
     try {
-      final imageBytes = await pickedFile.readAsBytes();
-
-      final prompt = 'Analiza este ticket de compra. Extrae el nombre del comercio (storeName), el importe total a pagar (totalAmount), y los productos comprados (items). Devuelve ÚNICAMENTE un objeto JSON con las claves "storeName" (string), "totalAmount" (número decimal, no string) y "items" (array de strings con nombres de productos). No añadas markdown ni texto adicional.';
-
-      final responseText = await SupabaseRepository.callGemini(
-        prompt: prompt,
-        imageBytes: imageBytes,
-      );
+      final result = await TicketScanner.scanTicket(pickedFile.path);
 
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.pop(context); // close loading
 
-      if (responseText == null || responseText.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Error: No se pudo conectar con el servicio de IA.'),
-          backgroundColor: Colors.redAccent,
-        ));
-        return;
-      }
-
-      final cleanText = responseText.replaceAll('```json', '').replaceAll('```', '').trim();
-      
-      final Map<String, dynamic> data = jsonDecode(cleanText);
-      final String storeName = data['storeName'] ?? 'Comercio Desconocido';
-      final num? totalAmountNum = data['totalAmount'] as num?;
-      final double totalFound = totalAmountNum?.toDouble() ?? 0.0;
-      final List<dynamic> itemsDynamic = data['items'] ?? [];
-      final List<String> items = itemsDynamic.map((e) => e.toString()).toList();
-
-      if (totalFound > 0) {
+      if (result.isConfident && result.totalAmount > 0) {
+        // Auto-create expense
         final newExpense = Expense(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: storeName,
-          amount: totalFound,
+          title: result.storeName,
+          amount: result.totalAmount,
           date: DateTime.now(),
           module: 'General',
-          attachedFileName: pickedFile.path.split('/').last,
+          attachedFileName: pickedFile.path.split(Platform.pathSeparator).last,
         );
-        
-        await SupabaseRepository.addExpense(newExpense);
-        
-        if (items.isNotEmpty) {
-           await SupabaseRepository.createShoppingListWithItems('Ticket $storeName', items);
+        AppData.expenses.insert(0, newExpense);
+        await LocalDatabase.insertExpense(newExpense);
+
+        // Auto-create shopping list from detected items
+        if (result.items.isNotEmpty) {
+          final newList = ShoppingList(
+            id: 'ticket_${DateTime.now().millisecondsSinceEpoch}',
+            title: 'Ticket ${result.storeName}',
+            dateCreated: DateTime.now(),
+            items: result.items.map((item) => ChecklistItem(
+              id: '${DateTime.now().microsecondsSinceEpoch}_${item.name.hashCode}',
+              title: item.name,
+              isDone: true,
+              price: item.price,
+            )).toList(),
+          );
+          AppData.shoppingLists.insert(0, newList);
+          await LocalDatabase.insertShoppingList(newList);
         }
 
-        setState(() {}); // Refresh UI
-        
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('¡Gasto de ${AppData.currency}${totalFound.toStringAsFixed(2)} y productos añadidos!'),
-          backgroundColor: const Color(0xFF10B981),
-        ));
+        setState(() {});
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('¡Gasto de ${AppData.currency}${result.totalAmount.toStringAsFixed(2)} detectado en ${result.storeName}!'),
+            backgroundColor: const Color(0xFF10B981),
+          ));
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No detectamos el total. Rellena los datos manualmente.')));
-        _showExpenseForm(initialTitle: storeName, attachedFileName: pickedFile.path.split('/').last);
+        // Low confidence — open manual form pre-filled
+        _showExpenseForm(
+          initialTitle: result.storeName,
+          initialAmount: result.totalAmount > 0 ? result.totalAmount : null,
+          attachedFileName: pickedFile.path.split(Platform.pathSeparator).last,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('No se detectó el total con certeza. Revisa los datos.'),
+          ));
+        }
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al analizar la imagen: $e')));
-    }
-  }
-
-  void _processTicketSimulation(String fileName) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return const AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Expanded(child: Text("Analizando ticket con IA...")),
-            ],
-          ),
-        );
-      },
-    );
-
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    Navigator.of(context).pop(); // Close loading
-
-    final randomAmount = (Random().nextDouble() * 50) + 5;
-    
-    final storeMap = {
-      "Supermercado": "Compras",
-      "Restaurante": "Ocio",
-      "Gasolinera": "Transporte",
-      "Cafetería": "Ocio",
-      "Papelería": "Compras",
-      "Billetes de Tren": "Transporte",
-      "Ferretería": "Hogar"
-    };
-
-    final stores = storeMap.keys.toList();
-    final randomStore = stores[Random().nextInt(stores.length)];
-    
-    String assignedModule = storeMap[randomStore]!;
-
-    if (!AppData.modules.contains(assignedModule)) {
-      assignedModule = 'General';
-      if (!AppData.modules.contains('General')) {
-        AppData.modules.add('General');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error al analizar la imagen: $e'),
+          backgroundColor: Colors.redAccent,
+        ));
       }
     }
-
-    setState(() {
-      AppData.expenses.insert(
-        0,
-        Expense(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: "Gasto en $randomStore",
-          amount: randomAmount,
-          date: DateTime.now(),
-          module: assignedModule,
-          attachedFileName: fileName,
-        ),
-      );
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Detectado: $randomStore. Archivo adjuntado.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   void _deleteExpense(String id) {
     setState(() {
       AppData.expenses.removeWhere((expense) => expense.id == id);
     });
+    LocalDatabase.deleteExpense(id);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Gasto eliminado.'),
@@ -522,15 +428,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             module: selectedModule,
                             attachedFileName: attachedFile,
                           );
-                          SupabaseRepository.addExpense(newExp).then((_) {
-                            if (mounted) setState(() {});
-                          });
+                          AppData.expenses.insert(0, newExp);
+                          LocalDatabase.insertExpense(newExp);
+                          setState(() {});
                         } else {
                           existingExpense.title = title;
                           existingExpense.amount = amount;
                           existingExpense.module = selectedModule;
                           existingExpense.attachedFileName = attachedFile;
-                          // TODO: Add Supabase update support
+                          LocalDatabase.insertExpense(existingExpense);
                           setState(() {});
                         }
 

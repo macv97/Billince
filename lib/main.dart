@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'screens/welcome_screen.dart';
+import 'screens/main_menu_screen.dart';
 import 'data/settings_provider.dart';
+import 'data/local_database.dart';
+import 'data/app_data.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +17,14 @@ Future<void> main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  // Load personal data from local SQLite into AppData cache
+  AppData.expenses
+    ..clear()
+    ..addAll(await LocalDatabase.getExpenses());
+  AppData.shoppingLists
+    ..clear()
+    ..addAll(await LocalDatabase.getShoppingLists());
 
   runApp(
     ChangeNotifierProvider(
@@ -28,7 +38,6 @@ class BillinceApp extends StatelessWidget {
   const BillinceApp({super.key});
 
   ColorFilter _getColorFilter(ColorBlindnessMode mode) {
-    // Simplified matrices for color blindness simulation/correction
     switch (mode) {
       case ColorBlindnessMode.protanopia:
         return const ColorFilter.matrix([
@@ -88,7 +97,7 @@ class BillinceApp extends StatelessWidget {
           primary: settings.interfaceColor,
           secondary: const Color(0xFF10B981),
           tertiary: const Color(0xFFF59E0B),
-          surface: const Color(0xFF1E293B), // Dark surface
+          surface: const Color(0xFF1E293B),
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
@@ -111,7 +120,7 @@ class BillinceApp extends StatelessWidget {
 
         return wrappedChild;
       },
-      home: const WelcomeScreen(),
+      home: const MainMenuScreen(), // Direct to dashboard — no login required
     );
   }
 }

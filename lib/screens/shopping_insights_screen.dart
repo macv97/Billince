@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../data/app_data.dart';
-import '../data/supabase_repository.dart';
-import '../models/checklist_item.dart';
 
 class ShoppingInsightsScreen extends StatefulWidget {
   const ShoppingInsightsScreen({super.key});
@@ -21,51 +19,16 @@ class _ShoppingInsightsScreenState extends State<ShoppingInsightsScreen> {
   }
 
   Future<void> _loadAIAdvice() async {
-    if (!SupabaseRepository.isAuthenticated) {
-      setState(() {
-        _aiAdvice = 'Inicia sesión para recibir consejos personalizados de la IA basados en tus hábitos de compra.';
-      });
-      return;
-    }
-
     final stats = _gatherStats();
     if (stats['totalLists'] == 0) {
       setState(() {
-        _aiAdvice = '¡Bienvenido! Empieza creando tu primera lista de la compra. A medida que vayas comprando, el asistente IA aprenderá tus patrones y te dará consejos personalizados.';
+        _aiAdvice = '¡Bienvenido! Empieza creando tu primera lista de la compra. A medida que vayas comprando, el asistente aprenderá tus patrones y te dará consejos personalizados.';
       });
       return;
     }
-
-    setState(() => _isLoadingAI = true);
-
-    final prompt = '''Eres un asistente financiero experto en hábitos de compra llamado "Lince IA Advisor". Analiza estos datos del usuario y da consejos prácticos, personalizados y concretos en español. Sé breve (máximo 4 frases).
-
-Datos del usuario:
-- Total de listas creadas: ${stats['totalLists']}
-- Total de productos añadidos: ${stats['totalProducts']}
-- Productos completados (tachados): ${stats['completedProducts']}
-- Tasa de completado: ${stats['completionRate']}%
-- Día favorito para comprar: ${stats['mostPopularDay']}
-- Productos más repetidos: ${stats['topProductsText']}
-
-Da consejos útiles sobre ahorro, planificación y hábitos de compra basándote en estos datos reales.''';
-
-    try {
-      final response = await SupabaseRepository.callGemini(prompt: prompt);
-      if (mounted) {
-        setState(() {
-          _aiAdvice = response ?? _generateFallbackAdvice(stats);
-          _isLoadingAI = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _aiAdvice = _generateFallbackAdvice(stats);
-          _isLoadingAI = false;
-        });
-      }
-    }
+    setState(() {
+      _aiAdvice = _generateFallbackAdvice(stats);
+    });
   }
 
   Map<String, dynamic> _gatherStats() {
@@ -339,9 +302,9 @@ Da consejos útiles sobre ahorro, planificación y hábitos de compra basándote
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-              child: Text(
-                SupabaseRepository.isAuthenticated ? 'IA Gemini' : 'Requiere sesión',
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              child: const Text(
+                'Análisis Local',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
               ),
             ),
           ),
