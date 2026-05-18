@@ -76,8 +76,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         actions: [
           // Insights button – labeled for clarity
           TextButton.icon(
-            icon: const Icon(Icons.auto_awesome, color: Color(0xFFF59E0B), size: 20),
-            label: const Text('Análisis', style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.insights, color: Color(0xFFF59E0B), size: 20),
+            label: const Text('Estadísticas', style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold)),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ShoppingInsightsScreen()));
             },

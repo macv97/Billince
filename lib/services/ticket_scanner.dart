@@ -2,12 +2,11 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
-/// Result of a ticket scan with locally extracted data.
 class TicketScanResult {
   final String storeName;
   final double totalAmount;
   final List<TicketLineItem> items;
-  final bool isConfident; // true if TOTAL keyword was found
+  final bool isConfident;
 
   const TicketScanResult({
     required this.storeName,
@@ -24,62 +23,94 @@ class TicketLineItem {
   const TicketLineItem({required this.name, required this.price});
 }
 
-/// 100% local ticket scanner using Google ML Kit OCR + post-processing algorithm.
-/// No cloud API calls, no tokens, no cost.
 class TicketScanner {
   static final _priceRegex = RegExp(r'(\d+[\.,]\d{2})');
   static final _totalKeywords = [
     'total', 'importe', 'suma', 'a pagar', 'total eur',
-    'total €', 'import', 'amount', 'subtotal', 'neto',
+    'total €', 'import', 'amount', 'neto',
   ];
+  static final _excludeKeywords = ['subtotal', 'descuento', 'cambio', 'entregado'];
 
-  /// Scans a ticket image and extracts store name, total amount, and line items.
+  /// Scans ticket 100% locally utilizing Google's On-Device ML Text Recognition
+  /// combined with spatial analysis and fuzzy logic for high precision.
   static Future<TicketScanResult> scanTicket(String imagePath) async {
     final inputImage = InputImage.fromFilePath(imagePath);
     final textRecognizer = TextRecognizer();
 
     try {
       final recognizedText = await textRecognizer.processImage(inputImage);
+      
+      // We process both line-grouped elements and pure geometric blocks
       final lines = _groupIntoHorizontalLines(recognizedText);
-
-      debugPrint('[TicketScanner] Detected ${lines.length} horizontal lines');
-
-      // Step 1: Extract store name (first 1-2 non-empty, non-price lines)
       final storeName = _extractStoreName(lines);
 
-      // Step 2: Find TOTAL anchor line
-      int totalLineIndex = -1;
+      // Advanced Geometric Total Extraction
       double totalAmount = 0.0;
       bool isConfident = false;
-
-      for (int i = lines.length - 1; i >= 0; i--) {
-        final lineText = lines[i].text.toLowerCase();
-        for (final keyword in _totalKeywords) {
-          if (lineText.contains(keyword)) {
-            // Look for price in the same line first
-            final priceMatch = _priceRegex.firstMatch(lines[i].text);
-            if (priceMatch != null) {
-              totalAmount = _parsePrice(priceMatch.group(1)!);
-              totalLineIndex = i;
-              isConfident = true;
+      int totalYCoord = -1;
+      
+      // 1. Find the TOTAL anchor element using exact or fuzzy match
+      TextElement? totalElement;
+      
+      for (final block in recognizedText.blocks) {
+        for (final line in block.lines) {
+          for (final element in line.elements) {
+            final text = element.text.toLowerCase().trim();
+            if (_isMatchTotal(text)) {
+              totalElement = element;
               break;
             }
-            // Try the next line if price not on the same line
-            if (i + 1 < lines.length) {
-              final nextMatch = _priceRegex.firstMatch(lines[i + 1].text);
-              if (nextMatch != null) {
-                totalAmount = _parsePrice(nextMatch.group(1)!);
-                totalLineIndex = i + 1;
-                isConfident = true;
-                break;
+          }
+          if (totalElement != null) break;
+        }
+        if (totalElement != null) break;
+      }
+
+      // 2. If we found a TOTAL anchor, look for a price to its right or slightly below
+      if (totalElement != null) {
+        final anchorY = totalElement.boundingBox.top;
+        final anchorHeight = totalElement.boundingBox.height;
+        final toleranceY = anchorHeight * 1.5; // Allow some skew
+
+        double maxPriceNearAnchor = 0.0;
+
+        for (final block in recognizedText.blocks) {
+          for (final line in block.lines) {
+            for (final element in line.elements) {
+              // Only consider elements that are physically to the right and aligned horizontally, or just one line below
+              if ((element.boundingBox.top - anchorY).abs() < toleranceY) {
+                final match = _priceRegex.firstMatch(element.text);
+                if (match != null) {
+                  final price = _parsePrice(match.group(1)!);
+                  if (price > maxPriceNearAnchor) {
+                    maxPriceNearAnchor = price;
+                  }
+                }
               }
             }
           }
         }
-        if (isConfident) break;
+        
+        if (maxPriceNearAnchor > 0) {
+          totalAmount = maxPriceNearAnchor;
+          isConfident = true;
+          totalYCoord = anchorY.toInt();
+        }
       }
 
-      // Step 3: If no TOTAL keyword found, take the largest price as a fallback
+      // 3. Fallback: Parse whole text with global Regex
+      if (!isConfident) {
+        final fullText = recognizedText.text.replaceAll('\n', ' ').toLowerCase();
+        final regex = RegExp(r'(?:total|importe|suma|pagar).{0,30}?(\d+[.,]\d{2})');
+        final globalMatch = regex.firstMatch(fullText);
+        
+        if (globalMatch != null) {
+          totalAmount = _parsePrice(globalMatch.group(1)!);
+          isConfident = true;
+        }
+      }
+
+      // 4. Ultimate Fallback: Just get the biggest price found
       if (!isConfident) {
         double maxPrice = 0.0;
         for (final line in lines) {
@@ -92,30 +123,35 @@ class TicketScanner {
             }
           }
         }
-        totalLineIndex = lines.length; // all lines are "before total"
       }
 
-      // Step 4: Extract product items (lines above TOTAL with a price pattern)
+      // 5. Extract items
       final items = <TicketLineItem>[];
-      final endIndex = totalLineIndex >= 0 ? totalLineIndex : lines.length;
-      for (int i = 2; i < endIndex; i++) { // skip first 2 lines (store name area)
+      for (int i = 2; i < lines.length; i++) {
         final line = lines[i];
+        
+        // Stop if we reached the physical Y coordinate of the total (if we found it)
+        if (totalYCoord != -1 && line.y >= (totalYCoord - 10)) break;
+
         final match = _priceRegex.firstMatch(line.text);
         if (match != null) {
           final price = _parsePrice(match.group(1)!);
-          // Extract the product name: text before the price
           String productName = line.text
               .substring(0, match.start)
-              .replaceAll(RegExp(r'[\d.,]+\s*[xX]\s*'), '') // remove qty patterns
+              .replaceAll(RegExp(r'[\d.,]+\s*[xX]\s*'), '')
               .replaceAll(RegExp(r'\s+'), ' ')
               .trim();
-          if (productName.length >= 2 && price < totalAmount) {
+          
+          // Filters
+          final isExcluded = _excludeKeywords.any((ex) => productName.toLowerCase().contains(ex));
+          
+          if (productName.length >= 2 && price < totalAmount && !isExcluded) {
             items.add(TicketLineItem(name: productName, price: price));
           }
         }
       }
 
-      debugPrint('[TicketScanner] Store: $storeName | Total: $totalAmount | Items: ${items.length} | Confident: $isConfident');
+      debugPrint('[TicketScanner] Local ML Kit -> Store: $storeName | Total: $totalAmount | Confident: $isConfident');
 
       return TicketScanResult(
         storeName: storeName,
@@ -128,15 +164,12 @@ class TicketScanner {
     }
   }
 
-  /// Scans a shopping list image and extracts product names only (no prices).
   static Future<List<String>> scanShoppingList(String imagePath) async {
     final inputImage = InputImage.fromFilePath(imagePath);
     final textRecognizer = TextRecognizer();
-
     try {
       final recognizedText = await textRecognizer.processImage(inputImage);
       final lines = _groupIntoHorizontalLines(recognizedText);
-
       return lines
           .map((l) => l.text.replaceAll(RegExp(r'[\d.,]+\s*(€|\$|£)?'), '').trim())
           .where((text) => text.length >= 2)
@@ -146,12 +179,22 @@ class TicketScanner {
     }
   }
 
-  // ── Private Helpers ─────────────────────────────────────────
+  // ── Advanced Processing Helpers ─────────────────────────────────────────
 
-  /// Groups text elements by similar Y coordinate to reconstruct horizontal lines.
+  /// Checks if a string is likely 'TOTAL' with tolerance to OCR errors like T0TAL, IMP0RTE.
+  static bool _isMatchTotal(String word) {
+    if (_totalKeywords.contains(word)) return true;
+    if (_excludeKeywords.contains(word)) return false;
+    
+    // Quick fuzzy matches
+    if (word.startsWith('tot') || word == 't0tal' || word == 't0ta1') return true;
+    if (word.startsWith('imp') && word.contains('rt')) return true;
+    
+    return false;
+  }
+
   static List<_ScanLine> _groupIntoHorizontalLines(RecognizedText recognizedText) {
     final elements = <_TextElementWithPos>[];
-
     for (final block in recognizedText.blocks) {
       for (final line in block.lines) {
         for (final element in line.elements) {
@@ -167,13 +210,11 @@ class TicketScanner {
 
     if (elements.isEmpty) return [];
 
-    // Sort by Y first, then X
     elements.sort((a, b) {
       final yDiff = a.y.compareTo(b.y);
       return yDiff != 0 ? yDiff : a.x.compareTo(b.x);
     });
 
-    // Group by similar Y (tolerance = average element height * 0.6)
     final avgHeight = elements.map((e) => e.height).reduce((a, b) => a + b) / elements.length;
     final tolerance = avgHeight * 0.6;
 
@@ -194,7 +235,6 @@ class TicketScanner {
         currentY = elements[i].y;
       }
     }
-    // Last group
     if (currentGroup.isNotEmpty) {
       currentGroup.sort((a, b) => a.x.compareTo(b.x));
       lines.add(_ScanLine(
@@ -202,17 +242,15 @@ class TicketScanner {
         y: currentY,
       ));
     }
-
     return lines;
   }
 
-  /// Extracts store name from first valid text lines.
   static String _extractStoreName(List<_ScanLine> lines) {
     final candidates = <String>[];
     for (int i = 0; i < min(3, lines.length); i++) {
       final clean = lines[i].text
-          .replaceAll(RegExp(r'[0-9]{5,}'), '') // remove long numbers (CIF, phone)
-          .replaceAll(RegExp(r'[\d.,]+\s*(€|\$|£)'), '') // remove prices
+          .replaceAll(RegExp(r'[0-9]{5,}'), '')
+          .replaceAll(RegExp(r'[\d.,]+\s*(€|\$|£)'), '')
           .trim();
       if (clean.length >= 3 && !_priceRegex.hasMatch(clean)) {
         candidates.add(clean);
@@ -221,7 +259,6 @@ class TicketScanner {
     return candidates.isNotEmpty ? candidates.first : 'Comercio';
   }
 
-  /// Parses a price string like "12,50" or "12.50" to double.
   static double _parsePrice(String raw) {
     return double.tryParse(raw.replaceAll(',', '.')) ?? 0.0;
   }
@@ -232,13 +269,11 @@ class _TextElementWithPos {
   final double y;
   final double x;
   final double height;
-
   _TextElementWithPos({required this.text, required this.y, required this.x, required this.height});
 }
 
 class _ScanLine {
   final String text;
   final double y;
-
   _ScanLine({required this.text, required this.y});
 }

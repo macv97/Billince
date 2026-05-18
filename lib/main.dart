@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/main_menu_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'data/settings_provider.dart';
 import 'data/local_database.dart';
 import 'data/app_data.dart';
@@ -120,7 +121,9 @@ class BillinceApp extends StatelessWidget {
 
         return wrappedChild;
       },
-      home: const MainMenuScreen(), // Direct to dashboard — no login required
+      home: Supabase.instance.client.auth.currentSession != null 
+          ? const MainMenuScreen() 
+          : const WelcomeScreen(),
     );
   }
 }
