@@ -4,6 +4,8 @@ import '../models/shared_group.dart';
 import '../models/shared_expense.dart';
 import '../models/shared_file.dart';
 import '../data/app_data.dart';
+import '../data/supabase_repository.dart';
+import 'welcome_screen.dart';
 
 class SharedGroupDetailScreen extends StatefulWidget {
   final SharedExpenseGroup group;
@@ -586,40 +588,77 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
     final balances = _balances;
     final settlements = _settlements;
     final c = widget.group.currency;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
       appBar: AppBar(
-        title: Text(widget.group.title),
-        backgroundColor: const Color(0xFFFEF3C7),
+        title: Text(widget.group.title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
+            icon: Icon(Icons.more_vert_rounded, color: primaryColor),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             onSelected: (value) {
+              if (value == 'share') {
+                if (!SupabaseRepository.isAuthenticated) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      title: const Text('Inicio de sesión requerido'),
+                      content: const Text('Para compartir este grupo mediante link o QR debes iniciar sesión en la nube.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
+                          },
+                          child: const Text('Ir a Iniciar Sesión'),
+                        )
+                      ],
+                    )
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Generando enlace para ${widget.group.title}...'))
+                  );
+                }
+              }
               if (value == 'members') _showManageMembersSheet();
               if (value == 'editName') _showEditNameSheet();
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
+                value: 'share',
+                child: Row(children: [Icon(Icons.share_rounded, color: Colors.green), SizedBox(width: 10), Text('Compartir (Link/QR)')]),
+              ),
+              const PopupMenuItem(
                 value: 'members',
-                child: Row(children: [Icon(Icons.people, color: Color(0xFF0F172A)), SizedBox(width: 10), Text('Gestionar Integrantes')]),
+                child: Row(children: [Icon(Icons.people_alt_rounded, color: Colors.blue), SizedBox(width: 10), Text('Gestionar Integrantes')]),
               ),
               const PopupMenuItem(
                 value: 'editName',
-                child: Row(children: [Icon(Icons.edit, color: Colors.blue), SizedBox(width: 10), Text('Editar Nombre')]),
+                child: Row(children: [Icon(Icons.edit_rounded, color: Colors.orange), SizedBox(width: 10), Text('Editar Nombre')]),
               ),
             ],
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: const Color(0xFF0F172A),
+          labelColor: primaryColor,
           unselectedLabelColor: Colors.blueGrey.shade300,
-          indicatorColor: const Color(0xFFF59E0B),
+          indicatorColor: primaryColor,
+          dividerColor: Colors.transparent,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
-            Tab(icon: Icon(Icons.list_alt), text: 'Gastos'),
-            Tab(icon: Icon(Icons.account_balance_wallet), text: 'Saldos'),
-            Tab(icon: Icon(Icons.folder), text: 'Archivos'),
+            Tab(icon: Icon(Icons.list_alt_rounded), text: 'Gastos'),
+            Tab(icon: Icon(Icons.account_balance_wallet_rounded), text: 'Saldos'),
+            Tab(icon: Icon(Icons.folder_shared_rounded), text: 'Archivos'),
           ],
         ),
       ),

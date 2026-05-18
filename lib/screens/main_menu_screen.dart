@@ -40,33 +40,17 @@ class MainMenuScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.primary),
         actions: [
-          // Currency selector
-          Container(
-            margin: const EdgeInsets.only(right: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: AppData.currency,
-                icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary, size: 20),
-                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
-                items: const [
-                  DropdownMenuItem(value: '€', child: Text('€')),
-                  DropdownMenuItem(value: '\$', child: Text('\$')),
-                  DropdownMenuItem(value: '£', child: Text('£')),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    AppData.currency = val;
-                    (context as Element).markNeedsBuild();
-                  }
-                },
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => _showSettingsSheet(context),
+              child: CircleAvatar(
+                backgroundColor: colorScheme.primary.withOpacity(0.15),
+                radius: 18,
+                child: Icon(Icons.person_rounded, color: colorScheme.primary, size: 20),
               ),
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.settings_outlined, color: colorScheme.primary),
-            tooltip: 'Ajustes',
-            onPressed: () => _showSettingsSheet(context),
           ),
         ],
       ),
@@ -96,33 +80,33 @@ class MainMenuScreen extends StatelessWidget {
                 children: [
                   _buildGridCard(
                     context,
-                    title: 'Gastos',
-                    subtitle: 'Escaneo IA',
-                    icon: Icons.receipt_long,
+                    title: 'Facturación',
+                    subtitle: 'Escaneo Inteligente',
+                    icon: Icons.receipt_long_rounded,
                     color: const Color(0xFF3B82F6), // Blue
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen())),
                   ),
                   _buildGridCard(
                     context,
-                    title: 'Listas',
-                    subtitle: 'Checklist',
-                    icon: Icons.checklist_rtl,
-                    color: const Color(0xFF10B981), // Emerald
+                    title: 'Checklists',
+                    subtitle: 'Listas de Compra',
+                    icon: Icons.shopping_cart_rounded,
+                    color: const Color(0xFF0D9488), // Teal
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChecklistScreen())),
                   ),
                   _buildGridCard(
                     context,
                     title: 'Grupos',
-                    subtitle: 'Compartir',
-                    icon: Icons.group_work_rounded,
+                    subtitle: 'Gastos Compartidos',
+                    icon: Icons.group_rounded,
                     color: const Color(0xFFF59E0B), // Amber
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharedExpensesScreen())),
                   ),
                   _buildGridCard(
                     context,
-                    title: 'Resumen',
-                    subtitle: 'Analíticas',
-                    icon: Icons.pie_chart_rounded,
+                    title: 'Analíticas',
+                    subtitle: 'Insights',
+                    icon: Icons.insights_rounded,
                     color: const Color(0xFF8B5CF6), // Purple
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SummaryScreen())),
                   ),
@@ -133,8 +117,9 @@ class MainMenuScreen extends StatelessWidget {
               
               // Wide card for calendar
               Card(
-                elevation: 0,
-                color: const Color(0xFF0F172A),
+                elevation: 4,
+                shadowColor: colorScheme.primary.withOpacity(0.2),
+                color: colorScheme.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 child: InkWell(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarScreen())),
@@ -314,16 +299,13 @@ class MainMenuScreen extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.logout, color: Colors.redAccent),
                     title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                    onTap: () async {
-                      Navigator.pop(context); // Close sheet
-                      await SupabaseRepository.signOut();
-                      if (context.mounted) {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                          (route) => false,
-                        );
-                      }
+                    onTap: () {
+                      SupabaseRepository.signOut(); // Asynchronous logout in background
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                        (route) => false,
+                      );
                     },
                   ),
                   const SizedBox(height: 10),

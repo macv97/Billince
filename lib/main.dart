@@ -84,8 +84,8 @@ class BillinceApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: settings.interfaceColor,
           primary: settings.interfaceColor,
-          secondary: const Color(0xFF10B981),
-          tertiary: const Color(0xFFF59E0B),
+          secondary: const Color(0xFF2563EB),
+          tertiary: const Color(0xFF0D9488),
           surface: Colors.grey.shade50,
           brightness: Brightness.light,
         ),
@@ -96,8 +96,8 @@ class BillinceApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: settings.interfaceColor,
           primary: settings.interfaceColor,
-          secondary: const Color(0xFF10B981),
-          tertiary: const Color(0xFFF59E0B),
+          secondary: const Color(0xFF2563EB),
+          tertiary: const Color(0xFF0D9488),
           surface: const Color(0xFF1E293B),
           brightness: Brightness.dark,
         ),
