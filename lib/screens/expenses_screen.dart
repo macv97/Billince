@@ -93,7 +93,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       if (!mounted) return;
       Navigator.pop(context); // close loading
 
-      if (result.isConfident && result.totalAmount > 0) {
+      if (result.totalAmount > 0) {
         // Auto-create expense
         final newExpense = Expense(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -131,15 +131,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           ));
         }
       } else {
-        // Low confidence — open manual form pre-filled
+        // Only if NOTHING was found — open manual form
         _showExpenseForm(
-          initialTitle: result.storeName,
-          initialAmount: result.totalAmount > 0 ? result.totalAmount : null,
+          initialTitle: result.storeName != 'Comercio' ? result.storeName : null,
           attachedFileName: pickedFile.path.split(Platform.pathSeparator).last,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('No se detectó el total con certeza. Revisa los datos.'),
+            content: Text('No se detectaron importes. Introduce los datos.'),
           ));
         }
       }
@@ -317,51 +316,96 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final primaryColor = Theme.of(context).colorScheme.primary;
+            final surfaceColor = isDark ? const Color(0xFF1E293B) : Colors.grey.shade50;
+            
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20,
-                right: 20,
-                top: 20,
+                left: 24,
+                right: 24,
+                top: 32,
               ),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      existingExpense == null ? 'Añadir Gasto Manual' : 'Editar Gasto',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            existingExpense == null ? Icons.add_circle_outline_rounded : Icons.edit_rounded,
+                            color: primaryColor,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            existingExpense == null ? 'Nuevo Gasto' : 'Editar Gasto',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    TextField(
+                    const SizedBox(height: 32),
+                    
+                    // Concepto Field
+                    TextFormField(
                       controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Concepto',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.description),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      decoration: InputDecoration(
+                        labelText: 'Concepto o Comercio',
+                        labelStyle: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.w500),
+                        filled: true,
+                        fillColor: surfaceColor,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        prefixIcon: Icon(Icons.storefront_rounded, color: primaryColor.withOpacity(0.7)),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
                       ),
                       textCapitalization: TextCapitalization.sentences,
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
+                    const SizedBox(height: 20),
+                    
+                    // Amount Field
+                    TextFormField(
                       controller: amountController,
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: primaryColor),
                       decoration: InputDecoration(
-                        labelText: 'Importe (${AppData.currency})',
-                        border: const OutlineInputBorder(),
+                        labelText: 'Importe Total',
+                        labelStyle: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.w500, fontSize: 16),
+                        filled: true,
+                        fillColor: surfaceColor,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                         prefixText: '${AppData.currency} ',
-                        prefixIcon: const Icon(Icons.payments_outlined),
+                        prefixStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: primaryColor),
+                        prefixIcon: Icon(Icons.account_balance_wallet_rounded, color: primaryColor.withOpacity(0.7)),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
                       ),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
+                    
+                    // Module Dropdown
                     DropdownButtonFormField<String>(
                       value: selectedModule,
-                      decoration: const InputDecoration(
-                        labelText: 'Módulo / Categoría',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.category),
+                      dropdownColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: 'Categoría',
+                        labelStyle: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.w500),
+                        filled: true,
+                        fillColor: surfaceColor,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        prefixIcon: Icon(Icons.category_rounded, color: primaryColor.withOpacity(0.7)),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
                       ),
                       items: AppData.modules.map((String mod) {
                         return DropdownMenuItem<String>(
@@ -377,31 +421,60 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         }
                       },
                     ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      icon: Icon(attachedFile == null ? Icons.attach_file : Icons.check_circle, color: attachedFile == null ? Theme.of(context).colorScheme.primary : Colors.green),
-                      label: Text(attachedFile == null ? 'Adjuntar Factura/Ticket' : 'Archivo adjuntado: $attachedFile'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: attachedFile == null ? Theme.of(context).colorScheme.primary : Colors.green),
-                      ),
-                      onPressed: () {
-                        // Simulate attachment directly for simplicity in the manual form
+                    const SizedBox(height: 24),
+                    
+                    // Attachment
+                    InkWell(
+                      onTap: () {
                         setModalState(() {
                           attachedFile = 'Factura_Manual_${DateTime.now().millisecondsSinceEpoch}.pdf';
                         });
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Archivo adjuntado.')));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Archivo adjuntado con éxito.')));
                       },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: attachedFile == null ? Colors.transparent : Colors.green.withOpacity(0.1),
+                          border: Border.all(
+                            color: attachedFile == null ? Colors.blueGrey.shade200 : Colors.green,
+                            width: 1.5,
+                            style: attachedFile == null ? BorderStyle.solid : BorderStyle.solid,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              attachedFile == null ? Icons.attach_file_rounded : Icons.check_circle_rounded,
+                              color: attachedFile == null ? Colors.blueGrey.shade400 : Colors.green,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              attachedFile == null ? 'Adjuntar Recibo (Opcional)' : 'Recibo adjuntado',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: attachedFile == null ? Colors.blueGrey.shade500 : Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 32),
+                    
+                    // Save Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
                       ),
                       onPressed: () {
                         final title = titleController.text.trim();
@@ -411,7 +484,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         if (title.isEmpty || amount <= 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Por favor, introduce un concepto e importe válidos.'),
+                              content: Text('Concepto o importe inválido.'),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
@@ -443,10 +516,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       },
                       child: Text(
                         existingExpense == null ? 'Guardar Gasto' : 'Actualizar Gasto',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),

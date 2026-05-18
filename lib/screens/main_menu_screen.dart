@@ -7,6 +7,8 @@ import 'shared_expenses_screen.dart';
 import 'calendar_screen.dart';
 import '../data/settings_provider.dart';
 import '../data/app_data.dart';
+import '../data/supabase_repository.dart';
+import 'welcome_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
@@ -307,6 +309,22 @@ class MainMenuScreen extends StatelessWidget {
                       label: '${settings.textScaleFactor}x',
                       onChanged: (v) => settings.setTextScaleFactor(v),
                     ),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.redAccent),
+                    title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    onTap: () async {
+                      Navigator.pop(context); // Close sheet
+                      await SupabaseRepository.signOut();
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                          (route) => false,
+                        );
+                      }
+                    },
                   ),
                   const SizedBox(height: 10),
                 ],
