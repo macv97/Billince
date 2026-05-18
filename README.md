@@ -1,6 +1,6 @@
-# ????? Billince
+# ?? Billince
 
-**Visión experta para tus finanzas (100% Offline-First).**
+**Visión experta para tus finanzas (100% Offline-First & Glassmorphism UI).**
 
 Billince es una aplicación móvil de gestión financiera personal de nivel profesional desarrollada en **Flutter** con backend opcional en **Supabase**. Su nombre nace de la fusión entre *Bill* (factura en inglés) y *Lince* (animal con visión aguda), representando el control preciso y la visión impecable sobre tus finanzas diarias.
 
@@ -14,17 +14,18 @@ Billince es una aplicación móvil de gestión financiera personal de nivel profesi
 - Los datos personales, gastos y listas de la compra se procesan y almacenan en bases de datos locales ultrarrápidas (`SQLite` / en caché).
 - **Protección Máxima a la Privacidad:** Si no inicias sesión, tus datos nunca abandonan tu dispositivo.
 
-### 2. Escaneo de Tickets Local (Visión Espacial)
+### 2. Escaneo de Tickets Local con Carrusel Inteligente (Visión Espacial)
 - **Cero APIs, Cero Coste:** En lugar de depender de GPT o Gemini gastando tokens, Billince emplea un modelo avanzado que fusiona **Google ML Kit Text Recognition** con heurística espacial (Bounding Boxes) y Natural Language Processing local para extraer comercios, precios totales e ítems con asombrosa precisión directamente desde la cámara o galería.
+- **Carrusel Inteligente UX:** Al escanear un ticket, la IA propone el importe final, y presenta todos los demás números detectados en un elegante carrusel de burbujas. Si el modelo falla, un solo *Tap* corrige el importe al instante, eliminando el tecleo manual.
 
 ### 3. Sincronización Opcional y Cloud (Supabase)
 - **Inicio de sesión opcional:** Útil si temes perder tu móvil o cambiar de dispositivo. Todos tus datos se respaldan en Supabase (PostgreSQL) protegido con políticas RLS.
 - **Gastos Compartidos (Cloud):** Solo si estás autenticado podrás crear grupos de gastos con amigos y sincronizarlos en tiempo real.
 
-### 4. Accesibilidad y Experiencia Premium (UI/UX)
-- Interfaces limpias, modo oscuro y claro automatizado.
+### 4. Accesibilidad y Experiencia Premium (Glassmorphism)
+- Rediseño arquitectónico enfocado en una **UI Glassmorphism** hiper-moderna en toda la app (Inicio, Listas, Gastos).
 - Ajustes de accesibilidad (tipografía ampliable, filtros para daltonismo).
-- Diseños modernos inspirados en *glassmorphism* y patrones financieros de élite.
+- Transiciones fluidas, modales redondeados y una coherencia visual absoluta basándose en el Color Scheme Primary.
 
 ---
 
@@ -34,8 +35,8 @@ Billince es una aplicación móvil de gestión financiera personal de nivel profesi
 | **Frontend** | Flutter 3.x / Dart | Aplicación móvil multiplataforma fluida con Material 3. |
 | **Backend Opcional** | Supabase (PostgreSQL) | Almacenamiento seguro, autenticación y base para colaboración. |
 | **BBDD Local** | SQLite | Motor principal Offline-First. |
-| **Visión e IA Local** | Google ML Kit + Spatial NLP | Escaneo de tickets seguro y gratuito sin servidores de terceros. |
+| **Visión e IA Local** | Google ML Kit + Spatial NLP | Escaneo de tickets 100% on-device con UX Híbrida Inteligente. |
 
 ---
 
-> *Billince — Gestiona tu dinero con la precisión y la agudeza visual de un lince.* ?????
+> *Billince — Gestiona tu dinero con la precisión y la agudeza visual de un lince.* ???
