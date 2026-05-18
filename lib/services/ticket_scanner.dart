@@ -24,8 +24,8 @@ class TicketLineItem {
 }
 
 class TicketScanner {
-  // Regex más tolerante: acepta espacios, comillas o falta de puntuación (ej. 12 50, 12'50, 12,5O)
-  static final _priceRegex = RegExp(r"(\d+[\.,\s']*[0-9Oo]{2})\s*(?:€|\$|EUR|£)?", caseSensitive: false);
+  // Regex más tolerante: acepta 1 o 2 decimales, comillas o falta de puntuación (ej. 16.5, 12'50, 12,5O)
+  static final _priceRegex = RegExp(r"(\d+[\.,\s']*[0-9Oo]{1,2})\s*(?:€|\$|EUR|£)?", caseSensitive: false);
   static final _totalKeywords = [
     'total', 'importe', 'suma', 'a pagar', 'total eur',
     'total €', 'import', 'amount', 'neto',
@@ -103,7 +103,7 @@ class TicketScanner {
       if (!isConfident) {
         final fullText = recognizedText.text.replaceAll('\n', ' ').toLowerCase();
         // Look for the biggest price overall that appears after a total keyword
-        final globalRegex = RegExp(r"(?:total|importe|suma|pagar).{0,50}?(\d+[\.,\s']*[0-9Oo]{2})");
+        final globalRegex = RegExp(r"(?:total|importe|suma|pagar).{0,50}?(\d+[\.,\s']*[0-9Oo]{1,2})");
         final matches = globalRegex.allMatches(fullText);
         
         double bestGlobal = 0;
@@ -270,23 +270,32 @@ class TicketScanner {
   /// Parses a price string extremely defensively. 
   /// Handles things like "12 50", "12'50", "12.5O", "1.234,50"
   static double _parsePrice(String raw) {
+    // Reject massive numbers without clear separators (like phone numbers)
+    if (raw.length > 6 && !raw.contains('.') && !raw.contains(',') && !raw.contains("'")) return 0.0;
+    
     // 1. Fix letter O mistaken for 0
     String clean = raw.replaceAll(RegExp(r'[Oo]'), '0');
     // 2. Remove any character that is not a digit, comma, dot, or space
     clean = clean.replaceAll(RegExp(r"[^\d\.,\s']"), '');
     
-    // 3. If there are multiple separators, assume only the last one is decimals if it has 2 digits
-    final matches = RegExp(r"(\d+)(?:[\.,\s']+)(\d{2})$").firstMatch(clean);
+    // 3. If there are multiple separators, assume only the last one is decimals if it has 1 or 2 digits
+    final matches = RegExp(r"(\d+)(?:[\.,\s']+)(\d{1,2})$").firstMatch(clean);
     
     if (matches != null) {
       final whole = matches.group(1)!.replaceAll(RegExp(r'[^\d]'), '');
-      final dec = matches.group(2)!;
+      String dec = matches.group(2)!;
+      if (dec.length == 1) dec = '${dec}0'; // 16.5 -> 16.50
       return double.tryParse('$whole.$dec') ?? 0.0;
     }
     
-    // Fallback if it doesn't end in exactly two decimal places (e.g. integer total)
+    // Fallback if it doesn't end in explicit decimal places (e.g. integer total)
     clean = clean.replaceAll(RegExp(r'[^\d]'), '');
-    return double.tryParse(clean) ?? 0.0;
+    final price = double.tryParse(clean) ?? 0.0;
+    
+    // Absurd price safeguard (protects against barcodes and phone numbers being read as integers)
+    if (price > 100000) return 0.0;
+    
+    return price;
   }
 }
 
