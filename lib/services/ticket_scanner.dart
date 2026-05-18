@@ -7,12 +7,14 @@ class TicketScanResult {
   final double totalAmount;
   final List<TicketLineItem> items;
   final bool isConfident;
+  final List<double> possiblePrices;
 
   const TicketScanResult({
     required this.storeName,
     required this.totalAmount,
     required this.items,
     required this.isConfident,
+    required this.possiblePrices,
   });
 }
 
@@ -161,11 +163,35 @@ class TicketScanner {
 
       debugPrint('[TicketScanner] Local ML Kit -> Store: $storeName | Total: $totalAmount | Confident: $isConfident');
 
+      // Collect all possible prices for the UX Carousel Bubble Feature
+      final possiblePricesSet = <double>{};
+      if (totalAmount > 0) possiblePricesSet.add(totalAmount);
+      
+      for (final line in lines) {
+        final matches = _priceRegex.allMatches(line.text);
+        for (final match in matches) {
+           final p = _parsePrice(match.group(1)!);
+           if (p > 0) possiblePricesSet.add(p);
+        }
+      }
+      
+      final possiblePrices = possiblePricesSet.toList()..sort((a, b) => b.compareTo(a));
+
       return TicketScanResult(
         storeName: storeName,
         totalAmount: totalAmount,
         items: items,
         isConfident: isConfident,
+        possiblePrices: possiblePrices,
+      );
+    } catch (e) {
+      debugPrint('TicketScanner Error: $e');
+      return const TicketScanResult(
+        storeName: 'Comercio',
+        totalAmount: 0,
+        items: [],
+        isConfident: false,
+        possiblePrices: [],
       );
     } finally {
       textRecognizer.close();

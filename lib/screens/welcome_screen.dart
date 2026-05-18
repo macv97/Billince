@@ -133,128 +133,180 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
+            final primaryColor = Theme.of(context).colorScheme.primary;
+            return Container(
+              margin: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
-                top: 24, left: 24, right: 24,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(isLogin ? 'Iniciar Sesión' : 'Registrarse', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                  const SizedBox(height: 20),
-                  if (errorMessage != null)
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? const Color(0xFF0F172A) 
+                    : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 5)
+                ]
+              ),
+              padding: const EdgeInsets.only(top: 32, left: 32, right: 32, bottom: 40),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 15),
-                      decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), border: Border.all(color: Colors.redAccent.withOpacity(0.5)), borderRadius: BorderRadius.circular(8)),
-                      child: Text(errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 14)),
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
                     ),
-                  TextField(
-                    controller: emailController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(labelText: 'Email', labelStyle: TextStyle(color: Colors.grey), enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: passwordController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(labelText: 'Contraseña', labelStyle: TextStyle(color: Colors.grey), enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 20),
-                  if (_isLoadingAuth) const CircularProgressIndicator(color: Colors.amber)
-                  else Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 14)),
-                        onPressed: () async {
-                          final email = emailController.text.trim();
-                          final password = passwordController.text.trim();
-                          
-                          if (email.isEmpty || password.isEmpty) {
-                            setModalState(() => errorMessage = 'Por favor rellena ambos campos.');
-                            return;
-                          }
-
-                          final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                          if (!emailRegex.hasMatch(email)) {
-                            setModalState(() => errorMessage = 'El formato del email no es válido. Asegúrate de incluir "@" y un dominio (ej: usuario@gmail.com).');
-                            return;
-                          }
-                          
-                          if (!isLogin && password.length < 6) {
-                            setModalState(() => errorMessage = 'La contraseña debe tener al menos 6 caracteres.');
-                            return;
-                          }
-
-                          setModalState(() {
-                            _isLoadingAuth = true;
-                            errorMessage = null;
-                          });
-                          
-                          try {
-                            if (isLogin) {
-                              await SupabaseRepository.signIn(email, password);
-                            } else {
-                              await SupabaseRepository.signUp(email, password);
-                            }
-                            if (mounted) {
-                              Navigator.pop(ctx);
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainMenuScreen()));
-                            }
-                          } catch (e) {
-                            final msg = e.toString();
-                            setModalState(() {
-                              if (msg.contains('Invalid login credentials')) {
-                                errorMessage = 'Credenciales incorrectas. Comprueba tu email y contraseña.';
-                              } else if (msg.contains('already registered')) {
-                                errorMessage = 'Este correo ya está registrado. Prueba a iniciar sesión.';
-                              } else if (msg.contains('invalid format') || msg.contains('validate email')) {
-                                errorMessage = 'El formato del email no es válido.';
-                              } else if (msg.contains('Email not confirmed')) {
-                                errorMessage = 'Debes confirmar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.';
-                              } else if (msg.contains('Password should be at least')) {
-                                errorMessage = 'La contraseña es demasiado corta. Usa al menos 6 caracteres.';
-                              } else {
-                                errorMessage = 'Ha ocurrido un error. Inténtalo de nuevo.';
+                    const SizedBox(height: 32),
+                    Text(
+                      isLogin ? 'Bienvenido de nuevo' : 'Crea tu cuenta', 
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isLogin ? 'Inicia sesión para sincronizar tus gastos.' : 'Únete a Billince y sincroniza en la nube.',
+                      style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade400, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 32),
+                    if (errorMessage != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withOpacity(0.1), 
+                          border: Border.all(color: Colors.redAccent.withOpacity(0.3)), 
+                          borderRadius: BorderRadius.circular(16)
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: Colors.redAccent),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.bold))),
+                          ],
+                        ),
+                      ),
+                    TextField(
+                      controller: emailController,
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                      decoration: InputDecoration(
+                        labelText: 'Correo Electrónico', 
+                        labelStyle: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600),
+                        prefixIcon: Icon(Icons.alternate_email_rounded, color: primaryColor.withOpacity(0.7)),
+                        filled: true,
+                        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: passwordController,
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña', 
+                        labelStyle: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600),
+                        prefixIcon: Icon(Icons.lock_outline_rounded, color: primaryColor.withOpacity(0.7)),
+                        filled: true,
+                        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                      ),
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 32),
+                    if (_isLoadingAuth) 
+                      const CircularProgressIndicator(color: Colors.amber)
+                    else 
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor, 
+                              foregroundColor: Colors.white, 
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            onPressed: () async {
+                              final email = emailController.text.trim();
+                              final password = passwordController.text.trim();
+                              
+                              if (email.isEmpty || password.isEmpty) {
+                                setModalState(() => errorMessage = 'Por favor rellena ambos campos.');
+                                return;
                               }
-                            });
-                          } finally {
-                            setModalState(() => _isLoadingAuth = false);
-                          }
-                        },
-                        child: Text(isLogin ? 'Entrar' : 'Crear Cuenta', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+
+                              final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                              if (!emailRegex.hasMatch(email)) {
+                                setModalState(() => errorMessage = 'Formato de correo no válido.');
+                                return;
+                              }
+                              
+                              if (!isLogin && password.length < 6) {
+                                setModalState(() => errorMessage = 'La contraseña debe tener al menos 6 caracteres.');
+                                return;
+                              }
+
+                              setModalState(() {
+                                _isLoadingAuth = true;
+                                errorMessage = null;
+                              });
+                              
+                              try {
+                                if (isLogin) {
+                                  await SupabaseRepository.signIn(email, password);
+                                } else {
+                                  await SupabaseRepository.signUp(email, password);
+                                }
+                                if (mounted) {
+                                  Navigator.pop(ctx);
+                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainMenuScreen()));
+                                }
+                              } catch (e) {
+                                final msg = e.toString();
+                                setModalState(() {
+                                  if (msg.contains('Invalid login credentials')) {
+                                    errorMessage = 'Credenciales incorrectas.';
+                                  } else if (msg.contains('already registered')) {
+                                    errorMessage = 'Este correo ya está registrado.';
+                                  } else {
+                                    errorMessage = 'Ha ocurrido un error. Inténtalo de nuevo.';
+                                  }
+                                });
+                              } finally {
+                                setModalState(() => _isLoadingAuth = false);
+                              }
+                            },
+                            child: Text(isLogin ? 'Entrar a mi cuenta' : 'Crear mi cuenta', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                isLogin = !isLogin;
+                                errorMessage = null;
+                              });
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: Text(
+                              isLogin ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión', 
+                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 15)
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () {
-                          setModalState(() {
-                            isLogin = !isLogin;
-                            errorMessage = null;
-                          });
-                        },
-                        child: Text(isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión', style: const TextStyle(color: Colors.amber)),
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54), padding: const EdgeInsets.symmetric(vertical: 12)),
-                        onPressed: () => _showMockSnack('Login con Google en desarrollo'),
-                        icon: const Icon(Icons.g_mobiledata, size: 30),
-                        label: const Text('Continuar con Google'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                  ],
+                ),
               ),
             );
           }
@@ -266,34 +318,59 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   void _showProfileDialog() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? const Color(0xFF0F172A) 
+                : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.only(top: 32, left: 24, right: 24, bottom: 40),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircleAvatar(
-                radius: 40,
-                backgroundColor: Colors.amber,
-                child: Icon(Icons.person, size: 40, color: Colors.white),
+              Container(
+                width: 50,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 32),
+                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
               ),
-              const SizedBox(height: 16),
-              const Text('Mi Perfil', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const Text('Inicia sesión para guardar tus datos en la nube y sincronizar con otros dispositivos.'),
-              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.amber, width: 3),
+                ),
+                child: const CircleAvatar(
+                  radius: 45,
+                  backgroundColor: Color(0xFF1E293B),
+                  child: Icon(Icons.person_rounded, size: 50, color: Colors.amber),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text('Modo Invitado', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 12),
+              Text(
+                'Actualmente tus datos solo se guardan en este dispositivo. Inicia sesión para activar el respaldo en la nube y sincronización.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade400, height: 1.5),
+              ),
+              const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  _showMockSnack('Inicio de sesión en desarrollo');
+                  _showAuthDialog();
                 },
-                icon: const Icon(Icons.cloud_sync),
-                label: const Text('Sincronizar en la Nube'),
+                icon: const Icon(Icons.cloud_sync_rounded),
+                label: const Text('Iniciar Sesión / Registrarse', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F172A),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
                 ),
               )
             ],

@@ -93,52 +93,25 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       if (!mounted) return;
       Navigator.pop(context); // close loading
 
-      if (result.totalAmount > 0) {
-        // Auto-create expense
-        final newExpense = Expense(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: result.storeName,
-          amount: result.totalAmount,
-          date: DateTime.now(),
-          module: 'General',
-          attachedFileName: pickedFile.path.split(Platform.pathSeparator).last,
-        );
-        AppData.expenses.insert(0, newExpense);
-        await LocalDatabase.insertExpense(newExpense);
-
-        // Auto-create shopping list from detected items
-        if (result.items.isNotEmpty) {
-          final newList = ShoppingList(
-            id: 'ticket_${DateTime.now().millisecondsSinceEpoch}',
-            title: 'Ticket ${result.storeName}',
-            dateCreated: DateTime.now(),
-            items: result.items.map((item) => ChecklistItem(
-              id: '${DateTime.now().microsecondsSinceEpoch}_${item.name.hashCode}',
-              title: item.name,
-              isDone: true,
-              price: item.price,
-            )).toList(),
-          );
-          AppData.shoppingLists.insert(0, newList);
-          await LocalDatabase.insertShoppingList(newList);
-        }
-
-        setState(() {});
-        if (mounted) {
+      // Option 2: Intelligent Price Carousel UX
+      // We always open the form with the best guesses and the list of possible prices as a carousel
+      _showExpenseForm(
+        initialTitle: result.storeName != 'Comercio' ? result.storeName : null,
+        initialAmount: result.totalAmount > 0 ? result.totalAmount : null,
+        attachedFileName: pickedFile.path.split(Platform.pathSeparator).last,
+        possiblePrices: result.possiblePrices,
+        ticketItems: result.items,
+      );
+      
+      if (mounted) {
+        if (result.totalAmount > 0) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('¡Gasto de ${AppData.currency}${result.totalAmount.toStringAsFixed(2)} detectado en ${result.storeName}!'),
+            content: Text('Revisa el gasto y guárdalo.'),
             backgroundColor: const Color(0xFF10B981),
           ));
-        }
-      } else {
-        // Only if NOTHING was found — open manual form
-        _showExpenseForm(
-          initialTitle: result.storeName != 'Comercio' ? result.storeName : null,
-          attachedFileName: pickedFile.path.split(Platform.pathSeparator).last,
-        );
-        if (mounted) {
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('No se detectaron importes. Introduce los datos.'),
+            content: Text('No detectamos importes claros. Por favor, rellénalos.'),
           ));
         }
       }
@@ -293,6 +266,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     double? initialAmount,
     String? initialModule,
     String? attachedFileName,
+    List<double>? possiblePrices,
+    List<TicketLineItem>? ticketItems,
   }) {
     final titleController = TextEditingController(text: existingExpense?.title ?? initialTitle ?? '');
     final amountController = TextEditingController(
@@ -391,6 +366,28 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
+                    if (possiblePrices != null && possiblePrices.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Text('Precios detectados (Toca para usar):', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: possiblePrices.map((price) {
+                          return ActionChip(
+                            label: Text('${AppData.currency} ${price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            backgroundColor: primaryColor.withOpacity(0.1),
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            onPressed: () {
+                              setModalState(() {
+                                amountController.text = price.toStringAsFixed(2);
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     
                     // Module Dropdown
@@ -502,6 +499,30 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           );
                           AppData.expenses.insert(0, newExp);
                           LocalDatabase.insertExpense(newExp);
+                          
+                          // If it came from a ticket and had items, generate the list
+                          if (ticketItems != null && ticketItems.isNotEmpty) {
+                            final newList = ShoppingList(
+                              id: 'ticket_${DateTime.now().millisecondsSinceEpoch}',
+                              title: 'Ticket $title',
+                              dateCreated: DateTime.now(),
+                              items: ticketItems.map((item) => ChecklistItem(
+                                id: '${DateTime.now().microsecondsSinceEpoch}_${item.name.hashCode}',
+                                title: item.name,
+                                isDone: true,
+                                price: item.price,
+                              )).toList(),
+                            );
+                            AppData.shoppingLists.insert(0, newList);
+                            LocalDatabase.insertShoppingList(newList);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Gasto y Lista de Compras guardados.')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Gasto guardado.')),
+                            );
+                          }
                           setState(() {});
                         } else {
                           existingExpense.title = title;
