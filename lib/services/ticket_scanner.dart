@@ -24,12 +24,13 @@ class TicketLineItem {
 }
 
 class TicketScanner {
-  static final _priceRegex = RegExp(r'(\d+[\.,]\d{2})');
+  // Regex más tolerante: acepta espacios, comillas o falta de puntuación (ej. 12 50, 12'50, 12,5O)
+  static final _priceRegex = RegExp(r"(\d+[\.,\s']*[0-9Oo]{2})\s*(?:€|\$|EUR|£)?", caseSensitive: false);
   static final _totalKeywords = [
     'total', 'importe', 'suma', 'a pagar', 'total eur',
     'total €', 'import', 'amount', 'neto',
   ];
-  static final _excludeKeywords = ['subtotal', 'descuento', 'cambio', 'entregado'];
+  static final _excludeKeywords = ['subtotal', 'descuento', 'cambio', 'entregado', 'base'];
 
   /// Scans ticket 100% locally utilizing Google's On-Device ML Text Recognition
   /// combined with spatial analysis and fuzzy logic for high precision.
@@ -70,7 +71,7 @@ class TicketScanner {
       if (totalElement != null) {
         final anchorY = totalElement.boundingBox.top;
         final anchorHeight = totalElement.boundingBox.height;
-        final toleranceY = anchorHeight * 1.5; // Allow some skew
+        final toleranceY = anchorHeight * 2.0; // Allow skew from bad gallery photos
 
         double maxPriceNearAnchor = 0.0;
 
@@ -98,29 +99,36 @@ class TicketScanner {
         }
       }
 
-      // 3. Fallback: Parse whole text with global Regex
+      // 3. Fallback: Parse whole text with global Regex targeting text AFTER total keywords
       if (!isConfident) {
         final fullText = recognizedText.text.replaceAll('\n', ' ').toLowerCase();
-        final regex = RegExp(r'(?:total|importe|suma|pagar).{0,30}?(\d+[.,]\d{2})');
-        final globalMatch = regex.firstMatch(fullText);
+        // Look for the biggest price overall that appears after a total keyword
+        final globalRegex = RegExp(r"(?:total|importe|suma|pagar).{0,50}?(\d+[\.,\s']*[0-9Oo]{2})");
+        final matches = globalRegex.allMatches(fullText);
         
-        if (globalMatch != null) {
-          totalAmount = _parsePrice(globalMatch.group(1)!);
+        double bestGlobal = 0;
+        for (final m in matches) {
+          final p = _parsePrice(m.group(1)!);
+          if (p > bestGlobal) bestGlobal = p;
+        }
+
+        if (bestGlobal > 0) {
+          totalAmount = bestGlobal;
           isConfident = true;
         }
       }
 
-      // 4. Ultimate Fallback: Just get the biggest price found
+      // 4. Ultimate Fallback: Just get the biggest price found anywhere (likely the total)
       if (!isConfident) {
         double maxPrice = 0.0;
         for (final line in lines) {
-          final match = _priceRegex.firstMatch(line.text);
-          if (match != null) {
-            final price = _parsePrice(match.group(1)!);
-            if (price > maxPrice) {
-              maxPrice = price;
-              totalAmount = price;
-            }
+          final matches = _priceRegex.allMatches(line.text);
+          for (final match in matches) {
+             final price = _parsePrice(match.group(1)!);
+             if (price > maxPrice) {
+               maxPrice = price;
+               totalAmount = price;
+             }
           }
         }
       }
@@ -145,7 +153,7 @@ class TicketScanner {
           // Filters
           final isExcluded = _excludeKeywords.any((ex) => productName.toLowerCase().contains(ex));
           
-          if (productName.length >= 2 && price < totalAmount && !isExcluded) {
+          if (productName.length >= 3 && price < totalAmount && price > 0 && !isExcluded) {
             items.add(TicketLineItem(name: productName, price: price));
           }
         }
@@ -187,7 +195,7 @@ class TicketScanner {
     if (_excludeKeywords.contains(word)) return false;
     
     // Quick fuzzy matches
-    if (word.startsWith('tot') || word == 't0tal' || word == 't0ta1') return true;
+    if (word.startsWith('tot') || word == 't0tal' || word == 't0ta1' || word == 'to1al' || word == 'tot4l') return true;
     if (word.startsWith('imp') && word.contains('rt')) return true;
     
     return false;
@@ -259,8 +267,26 @@ class TicketScanner {
     return candidates.isNotEmpty ? candidates.first : 'Comercio';
   }
 
+  /// Parses a price string extremely defensively. 
+  /// Handles things like "12 50", "12'50", "12.5O", "1.234,50"
   static double _parsePrice(String raw) {
-    return double.tryParse(raw.replaceAll(',', '.')) ?? 0.0;
+    // 1. Fix letter O mistaken for 0
+    String clean = raw.replaceAll(RegExp(r'[Oo]'), '0');
+    // 2. Remove any character that is not a digit, comma, dot, or space
+    clean = clean.replaceAll(RegExp(r"[^\d\.,\s']"), '');
+    
+    // 3. If there are multiple separators, assume only the last one is decimals if it has 2 digits
+    final matches = RegExp(r"(\d+)(?:[\.,\s']+)(\d{2})$").firstMatch(clean);
+    
+    if (matches != null) {
+      final whole = matches.group(1)!.replaceAll(RegExp(r'[^\d]'), '');
+      final dec = matches.group(2)!;
+      return double.tryParse('$whole.$dec') ?? 0.0;
+    }
+    
+    // Fallback if it doesn't end in exactly two decimal places (e.g. integer total)
+    clean = clean.replaceAll(RegExp(r'[^\d]'), '');
+    return double.tryParse(clean) ?? 0.0;
   }
 }
 

@@ -70,68 +70,103 @@ class MainMenuScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 6),
               Text(
-                'Tu control financiero',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colorScheme.primary),
-                textAlign: TextAlign.center,
+                'Tus finanzas,',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: colorScheme.primary, height: 1.1),
               ),
-              const SizedBox(height: 6),
               Text(
-                '¿Qué necesitas gestionar hoy?',
-                style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade400),
-                textAlign: TextAlign.center,
+                'bajo control experto.',
+                style: TextStyle(fontSize: 22, color: Colors.blueGrey.shade400, fontWeight: FontWeight.w500),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 32),
 
-              _buildMenuCard(
-                context,
-                title: 'Gestión de Gastos',
-                subtitle: 'Escanea tickets y controla tus finanzas',
-                icon: Icons.receipt_long,
-                color: colorScheme.primary,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen())),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 0.85,
+                children: [
+                  _buildGridCard(
+                    context,
+                    title: 'Gastos',
+                    subtitle: 'Escaneo IA',
+                    icon: Icons.receipt_long,
+                    color: const Color(0xFF3B82F6), // Blue
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen())),
+                  ),
+                  _buildGridCard(
+                    context,
+                    title: 'Listas',
+                    subtitle: 'Checklist',
+                    icon: Icons.checklist_rtl,
+                    color: const Color(0xFF10B981), // Emerald
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChecklistScreen())),
+                  ),
+                  _buildGridCard(
+                    context,
+                    title: 'Grupos',
+                    subtitle: 'Compartir',
+                    icon: Icons.group_work_rounded,
+                    color: const Color(0xFFF59E0B), // Amber
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharedExpensesScreen())),
+                  ),
+                  _buildGridCard(
+                    context,
+                    title: 'Resumen',
+                    subtitle: 'Analíticas',
+                    icon: Icons.pie_chart_rounded,
+                    color: const Color(0xFF8B5CF6), // Purple
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SummaryScreen())),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
-              _buildMenuCard(
-                context,
-                title: 'Gastos Compartidos',
-                subtitle: 'Comparte cuentas y cuadra saldos',
-                icon: Icons.group,
-                color: const Color(0xFFF59E0B),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharedExpensesScreen())),
+              
+              const SizedBox(height: 16),
+              
+              // Wide card for calendar
+              Card(
+                elevation: 0,
+                color: const Color(0xFF0F172A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                child: InkWell(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarScreen())),
+                  borderRadius: BorderRadius.circular(24),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.calendar_month_rounded, size: 32, color: Colors.white),
+                        ),
+                        const SizedBox(width: 20),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Calendario', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                              SizedBox(height: 4),
+                              Text('Eventos y vencimientos', style: TextStyle(fontSize: 14, color: Colors.white70)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 14),
-              _buildMenuCard(
-                context,
-                title: 'Lista de la Compra',
-                subtitle: 'Organiza tus compras y analiza hábitos',
-                icon: Icons.checklist_rtl,
-                color: const Color(0xFF10B981),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChecklistScreen())),
-              ),
-              const SizedBox(height: 14),
-              _buildMenuCard(
-                context,
-                title: 'Resumen y Gráficos',
-                subtitle: 'Visualiza en qué te gastas el dinero',
-                icon: Icons.pie_chart,
-                color: Colors.blueGrey,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SummaryScreen())),
-              ),
-              const SizedBox(height: 14),
-              _buildMenuCard(
-                context,
-                title: 'Calendario y Eventos',
-                subtitle: 'Agenda personal y tareas diarias',
-                icon: Icons.calendar_month,
-                color: Colors.deepPurple,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarScreen())),
-              ),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -139,43 +174,55 @@ class MainMenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, {
+  Widget _buildGridCard(BuildContext context, {
     required String title,
     required String subtitle,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 2,
-      shadowColor: color.withOpacity(0.25),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(18.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                child: Icon(icon, size: 28, color: color),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? color.withOpacity(0.15) : Colors.white;
+    final borderColor = isDark ? color.withOpacity(0.3) : color.withOpacity(0.1);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor, width: 1.5),
+        boxShadow: isDark ? [] : [
+          BoxShadow(color: color.withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 6))
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(icon, size: 28, color: color),
+                ),
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
-                    const SizedBox(height: 4),
-                    Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600, height: 1.3)),
+                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600)),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios, color: Colors.grey.shade300, size: 16),
-            ],
+              ],
+            ),
           ),
         ),
       ),
