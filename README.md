@@ -1,42 +1,50 @@
-# ?? Billince
+# ğŸ† Billince
 
-**Visión experta para tus finanzas (100% Offline-First & Glassmorphism UI).**
+**Tu control de gastos, simple y claro (100% Offline-First & Glassmorphism UI).**
 
-Billince es una aplicación móvil de gestión financiera personal de nivel profesional desarrollada en **Flutter** con backend opcional en **Supabase**. Su nombre nace de la fusión entre *Bill* (factura en inglés) y *Lince* (animal con visión aguda), representando el control preciso y la visión impecable sobre tus finanzas diarias.
+Billince es una aplicaciÃ³n mÃ³vil de gestiÃ³n financiera personal de nivel profesional desarrollada en **Flutter** con backend opcional en **Supabase**. Su nombre nace de la fusiÃ³n entre *Bill* (factura en inglÃ©s) y *Lince* (animal con visiÃ³n aguda), representando el control preciso y la visiÃ³n impecable sobre tus finanzas diarias.
 
-> ?? **Estado Actual:** Aplicación 100% Offline-First. Todas las funciones, incluido el potente escaneo de tickets mediante Machine Learning local (NLP + Geometría), funcionan **sin internet** y **sin consumir APIs en la nube**. El inicio de sesión es opcional y sirve únicamente para respaldo en la nube y gastos compartidos.
+> ğŸ›¡ï¸ **Estado Actual:** AplicaciÃ³n 100% Offline-First. Todas las funciones, incluido el potente escaneo de tickets mediante Machine Learning local (NLP + GeometrÃ­a), funcionan **sin internet** y **sin consumir APIs en la nube**. El inicio de sesiÃ³n es opcional y sirve Ãºnicamente para respaldo en la nube y gastos compartidos.
 
 ---
 
-## ? Funcionalidades Destacadas
+## âœ¨ Funcionalidades Destacadas
 
-### 1. 100% Offline-First por diseño
-- Los datos personales, gastos y listas de la compra se procesan y almacenan en bases de datos locales ultrarrápidas (`SQLite` / en caché).
-- **Protección Máxima a la Privacidad:** Si no inicias sesión, tus datos nunca abandonan tu dispositivo.
+### 1. 100% Offline-First por diseÃ±o
+- Los datos personales, gastos y listas de la compra se procesan y almacenan en bases de datos locales ultrarrÃ¡pidas (`SQLite` / en cachÃ©).
+- **ProtecciÃ³n MÃ¡xima a la Privacidad:** Si no inicias sesiÃ³n, tus datos nunca abandonan tu dispositivo.
 
-### 2. Escaneo de Tickets Local con Carrusel Inteligente (Visión Espacial)
-- **Cero APIs, Cero Coste:** En lugar de depender de GPT o Gemini gastando tokens, Billince emplea un modelo avanzado que fusiona **Google ML Kit Text Recognition** con heurística espacial (Bounding Boxes) y Natural Language Processing local para extraer comercios, precios totales e ítems con asombrosa precisión directamente desde la cámara o galería.
-- **Carrusel Inteligente UX:** Al escanear un ticket, la IA propone el importe final, y presenta todos los demás números detectados en un elegante carrusel de burbujas. Si el modelo falla, un solo *Tap* corrige el importe al instante, eliminando el tecleo manual.
+### 2. Escaneo de Tickets Local con Carrusel Inteligente (VisiÃ³n Espacial)
+- **Cero APIs, Cero Coste:** En lugar de depender de servicios IA gastando tokens, Billince emplea un modelo avanzado que fusiona **Google ML Kit Text Recognition** con heurÃ­stica espacial (Bounding Boxes) y procesamiento local para extraer comercios, precios totales e Ã­tems con asombrosa precisiÃ³n directamente desde la cÃ¡mara o galerÃ­a.
+- **Carrusel Inteligente UX:** Al escanear una factura, el sistema propone el importe final, y presenta todos los demÃ¡s nÃºmeros detectados en un elegante carrusel de burbujas. Si el modelo falla, un solo *Toque* corrige el importe al instante, eliminando el tecleo manual.
 
-### 3. Sincronización Opcional y Cloud (Supabase)
-- **Inicio de sesión opcional:** Útil si temes perder tu móvil o cambiar de dispositivo. Todos tus datos se respaldan en Supabase (PostgreSQL) protegido con políticas RLS.
-- **Gastos Compartidos (Cloud):** Solo si estás autenticado podrás crear grupos de gastos con amigos y sincronizarlos en tiempo real.
+### 3. SincronizaciÃ³n Opcional y Cloud (Supabase)
+- **Inicio de sesiÃ³n opcional:** Ãštil si temes perder tu mÃ³vil o cambiar de dispositivo. Todos tus datos se respaldan en Supabase (PostgreSQL) protegido con polÃ­ticas RLS.
+- **Grupos (Cloud):** Solo si estÃ¡s autenticado podrÃ¡s acceder a este mÃ³dulo para crear gastos con amigos.
 
 ### 4. Accesibilidad y Experiencia Premium (Glassmorphism)
-- Rediseño arquitectónico enfocado en una **UI Glassmorphism** hiper-moderna en toda la app (Inicio, Listas, Gastos).
-- Ajustes de accesibilidad (tipografía ampliable, filtros para daltonismo).
-- Transiciones fluidas, modales redondeados y una coherencia visual absoluta basándose en el Color Scheme Primary.
+- RediseÃ±o arquitectÃ³nico enfocado en una **UI Glassmorphism** hiper-moderna y corporativa en toda la app (Inicio, Listas, Gastos).
+- Ajustes de accesibilidad (tipografÃ­a ampliable, filtros para daltonismo) y menÃºs perfectamente alineados.
+- Transiciones fluidas, modales redondeados y una coherencia visual absoluta basÃ¡ndose en colores corporativos limpios y elegantes.
 
 ---
 
-## ??? Stack Tecnológico
-| Componente | Tecnología | Propósito |
+## ğŸš€ PrÃ³ximas Funcionalidades (Roadmap)
+
+### ColaboraciÃ³n Total en Tiempo Real (SincronizaciÃ³n Funcional de Deep Links)
+- **Invitaciones a Gastos Compartidos:** Implementar un backend en Supabase y Deep Linking nativo funcional para que el enlace o QR generado permita a cualquier amigo abrir la app, unirse al instante al evento y colaborar en la misma lista.
+- **CÃ¡lculo cruzado:** Capacidad de ver quiÃ©n debe quÃ© a quiÃ©n y enviar el recordatorio en directo de las deudas en ese mismo instante a todos los usuarios en la nube vinculados al grupo.
+
+---
+
+## ğŸ› ï¸ Stack TecnolÃ³gico
+| Componente | TecnologÃ­a | PropÃ³sito |
 |---|---|---|
-| **Frontend** | Flutter 3.x / Dart | Aplicación móvil multiplataforma fluida con Material 3. |
-| **Backend Opcional** | Supabase (PostgreSQL) | Almacenamiento seguro, autenticación y base para colaboración. |
+| **Frontend** | Flutter 3.x / Dart | AplicaciÃ³n mÃ³vil multiplataforma fluida. |
+| **Backend Opcional** | Supabase (PostgreSQL) | Almacenamiento seguro, autenticaciÃ³n y base para colaboraciÃ³n. |
 | **BBDD Local** | SQLite | Motor principal Offline-First. |
-| **Visión e IA Local** | Google ML Kit + Spatial NLP | Escaneo de tickets 100% on-device con UX Híbrida Inteligente. |
+| **VisiÃ³n e Inteligencia Local** | Google ML Kit + Spatial NLP | Escaneo de facturas 100% en dispositivo con UX HÃ­brida Inteligente. |
 
 ---
 
-> *Billince — Gestiona tu dinero con la precisión y la agudeza visual de un lince.* ???
+> *Billince â€” Gestiona tu dinero con la precisiÃ³n y la agudeza visual de un lince.* ğŸ†
