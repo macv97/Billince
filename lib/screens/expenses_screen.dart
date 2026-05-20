@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 import '../models/expense.dart';
 import '../models/checklist_item.dart';
 import '../data/app_data.dart';
@@ -490,7 +491,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
                         if (existingExpense == null) {
                           final newExp = Expense(
-                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            id: const Uuid().v4(),
                             title: title,
                             amount: amount,
                             date: DateTime.now(),
@@ -503,7 +504,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           // If it came from a ticket and had items, generate the list
                           if (ticketItems != null && ticketItems.isNotEmpty) {
                             final newList = ShoppingList(
-                              id: 'ticket_${DateTime.now().millisecondsSinceEpoch}',
+                              id: const Uuid().v4(),
                               title: 'Ticket $title',
                               dateCreated: DateTime.now(),
                               items: ticketItems.map((item) => ChecklistItem(
