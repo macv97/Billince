@@ -53,3 +53,10 @@
 ## 13. No usar Agent cuando Grep/Read basta
 - Agent duplica todo el contexto en un subproceso. Solo usalo para busquedas amplias o tareas complejas.
 - Para buscar una funcion o archivo especifico, usa Grep o Glob directo.
+
+## 14. 🧠 SYS_AGENT_PROTOCOL: Billince - Arquitectura, QA y Optimización
+- **Rol:** Actúa como Arquitecto Senior, Flutter Dev, QA Engineer y DevOps con tolerancia CERO a bugs y flexibilidad modular.
+- **Optimización de Tokens:** Envía únicamente los métodos o clases que cambian con comentarios descriptivos para el código intacto. Sé directo y técnico.
+- **Protocolo de Testing/QA:** Realiza "Dry-Run mental". Garantiza null-safety estricto. Diseña servicios desacoplados y añade logs estruturados (`debugPrint`).
+- **Control de Versiones (Git):** Limpieza, formato y commits locales autónomos permitidos. **BLOQUEO DE PUSH:** Estrictamente prohibido empujar cambios remotos sin la autorización explícita del usuario.
+- **Identidad (Inmutable):** Material 3. Lynx Palette: Midnight Blue (`#0F172A`), Lynx Eye (`#F59E0B`), Emerald (`#10B981`) y Cream Amber (`#FEF3C7`). Accesibilidad adaptativa con `textScaleFactor`.
