@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/shared_group.dart';
 import '../data/app_data.dart';
+import '../data/supabase_repository.dart';
 import 'shared_group_detail_screen.dart';
 
 class SharedExpensesScreen extends StatefulWidget {
@@ -96,6 +97,131 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
               ),
             );
           }
+        );
+      }
+    );
+  }
+
+  void _showGroupOptionsSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.add_circle_outline, size: 28, color: Colors.blue),
+                  title: const Text('Crear Nuevo Evento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  subtitle: const Text('Para organizar un viaje, piso, etc.'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showAddGroupSheet();
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.qr_code_scanner, size: 28, color: Colors.green),
+                  title: const Text('Unirse a un Evento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  subtitle: const Text('Mediante Link o escaneando QR'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showJoinGroupSheet();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    );
+  }
+
+  void _showJoinGroupSheet() {
+    final linkController = TextEditingController();
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            top: 24, left: 24, right: 24
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Unirse a un Evento', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Escanear QR'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.green.shade50,
+                  foregroundColor: Colors.green.shade700,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usa tu cámara nativa para leer el QR y pega el enlace aquí.')));
+                },
+              ),
+              const SizedBox(height: 24),
+              const Text('O introduce el enlace:', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: linkController,
+                decoration: InputDecoration(
+                  hintText: 'https://billince.app/join/ID...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.link),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF0F172A),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  final link = linkController.text.trim();
+                  if (link.isNotEmpty) {
+                    Navigator.pop(context); // close sheet
+                    
+                    if (!SupabaseRepository.isAuthenticated) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes iniciar sesión para unirte.')));
+                      return;
+                    }
+                    
+                    String groupId = link;
+                    if (link.contains('/join/')) {
+                      groupId = link.split('/join/').last;
+                    } else if (link.contains('/')) {
+                      groupId = link.split('/').last;
+                    }
+                    
+                    try {
+                      await SupabaseRepository.joinSharedGroup(groupId);
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unido con éxito. (Datos en la nube)')));
+                    } catch (e) {
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    }
+                  }
+                },
+                child: const Text('Unirse', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         );
       }
     );
@@ -199,9 +325,9 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
-        onPressed: _showAddGroupSheet,
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo Evento'),
+        onPressed: _showGroupOptionsSheet,
+        icon: const Icon(Icons.event_available),
+        label: const Text('Opciones de Evento'),
       ),
     );
   }
