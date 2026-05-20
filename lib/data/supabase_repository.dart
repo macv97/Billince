@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/expense.dart';
+import 'app_data.dart';
 
 /// Supabase repository — For shared groups and personal data backup.
 /// Personal data (expenses, shopping lists, calendar) lives in local SQLite.
@@ -54,9 +55,9 @@ class SupabaseRepository {
         'title': expense.title,
         'amount': expense.amount,
         'date': expense.date.toIso8601String(),
-        'category': expense.category,
-        'currency': expense.currency,
-        'attached_file_path': expense.attachedFilePath,
+        'category': expense.module,
+        'currency': AppData.currency,
+        'attached_file_path': expense.attachedFileName,
       });
     } catch (e) {
       // Ignorar fallo de subida, se quedará offline y se podría sincronizar después
@@ -85,9 +86,8 @@ class SupabaseRepository {
         title: data['title'],
         amount: (data['amount'] as num).toDouble(),
         date: DateTime.parse(data['date']),
-        category: data['category'],
-        currency: data['currency'],
-        attachedFilePath: data['attached_file_path'],
+        module: data['category'],
+        attachedFileName: data['attached_file_path'],
       )).toList();
     } catch (e) {
       print("Error fetching expenses from cloud: $e");
