@@ -23,8 +23,20 @@ class SupabaseRepository {
   }
 
   // ── Shared Expenses (Cloud-synced via Supabase) ─────────────
-  // TODO: Implement real Supabase tables for shared groups
-  // - Create/join groups via invite link or QR
-  // - Sync expenses within a group in real-time
-  // - Settle debts between members
+  
+  /// Une al usuario actual a un grupo compartido mediante su UUID (Deep Link/QR)
+  static Future<void> joinSharedGroup(String groupId) async {
+    final user = currentUser;
+    if (user == null) throw Exception('Debes iniciar sesión primero.');
+    
+    // Inserción en la tabla puente group_members en Supabase
+    await client.from('group_members').insert({
+      'group_id': groupId,
+      'user_id': user.id,
+      'joined_at': DateTime.now().toIso8601String(),
+    });
+    
+    // TODO: (Opcional) Refrescar la lista local AppData.sharedGroups 
+    // descargando los datos del grupo recién unido.
+  }
 }
