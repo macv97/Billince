@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import '../models/expense.dart';
 import '../models/checklist_item.dart';
 import '../data/app_data.dart';
@@ -74,27 +73,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final pickedFile = await picker.pickImage(source: source, imageQuality: 90);
     if (pickedFile == null) return;
 
-    final primaryColor = Theme.of(context).colorScheme.primary;
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: pickedFile.path,
-      compressQuality: 100,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Subraya/Recorta el Precio',
-          toolbarColor: primaryColor,
-          toolbarWidgetColor: Colors.white,
-          initAspectRatio: CropAspectRatioPreset.original,
-          lockAspectRatio: false,
-          hideBottomControls: false,
-        ),
-        IOSUiSettings(
-          title: 'Subraya/Recorta el Precio',
-        ),
-      ],
-    );
-
-    if (croppedFile == null) return;
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -110,7 +88,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
 
     try {
-      final result = await TicketScanner.scanTicket(croppedFile.path);
+      final result = await TicketScanner.scanTicket(pickedFile.path);
 
       if (!mounted) return;
       Navigator.pop(context); // close loading
@@ -120,7 +98,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       _showExpenseForm(
         initialTitle: result.storeName != 'Comercio' ? result.storeName : null,
         initialAmount: result.totalAmount > 0 ? result.totalAmount : null,
-        attachedFileName: croppedFile.path.split(Platform.pathSeparator).last,
+        attachedFileName: pickedFile.path.split(Platform.pathSeparator).last,
         possiblePrices: result.possiblePrices,
         ticketItems: result.items,
       );

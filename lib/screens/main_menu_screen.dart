@@ -45,10 +45,22 @@ class MainMenuScreen extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
               onTap: () => _showSettingsSheet(context),
-              child: CircleAvatar(
-                backgroundColor: colorScheme.primary.withOpacity(0.15),
-                radius: 18,
-                child: Icon(Icons.person_rounded, color: colorScheme.primary, size: 20),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981).withOpacity(0.2) : colorScheme.primary.withOpacity(0.15),
+                    radius: 18,
+                    child: Icon(Icons.person_rounded, color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : colorScheme.primary, size: 20),
+                  ),
+                  if (SupabaseRepository.isAuthenticated)
+                    Positioned(
+                      right: 0, bottom: 0,
+                      child: Container(
+                        width: 10, height: 10,
+                        decoration: BoxDecoration(color: const Color(0xFF10B981), shape: BoxShape.circle, border: Border.all(color: colorScheme.surface, width: 2)),
+                      ),
+                    )
+                ],
               ),
             ),
           ),
