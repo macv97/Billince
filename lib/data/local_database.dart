@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/expense.dart';
 import '../models/checklist_item.dart';
+import 'supabase_repository.dart';
 
 /// SQLite local database for offline-first personal data persistence.
 /// Supabase is NOT used for personal data — only for shared expenses.
@@ -75,6 +76,9 @@ class LocalDatabase {
       'module': expense.module,
       'attached_file_name': expense.attachedFileName,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+    
+    // Backup to cloud if authenticated
+    SupabaseRepository.syncExpense(expense);
   }
 
   static Future<List<Expense>> getExpenses() async {
@@ -93,6 +97,9 @@ class LocalDatabase {
   static Future<void> deleteExpense(String id) async {
     final db = await database;
     await db.delete('expenses', where: 'id = ?', whereArgs: [id]);
+    
+    // Remove from cloud if authenticated
+    SupabaseRepository.deleteExpense(id);
   }
 
   // ── Shopping Lists ──────────────────────────────────────────

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/expense.dart';
 
-/// Supabase repository — ONLY for shared/collaborative expenses.
+/// Supabase repository — For shared groups and personal data backup.
 /// Personal data (expenses, shopping lists, calendar) lives in local SQLite.
 class SupabaseRepository {
   static final SupabaseClient client = Supabase.instance.client;
@@ -38,5 +39,59 @@ class SupabaseRepository {
     
     // TODO: (Opcional) Refrescar la lista local AppData.sharedGroups 
     // descargando los datos del grupo recién unido.
+  }
+
+  // ── Personal Expenses Sync (Cloud Backup) ─────────────
+  
+  static Future<void> syncExpense(Expense expense) async {
+    final user = currentUser;
+    if (user == null) return; // Silent return si no está logueado, se queda offline.
+
+    try {
+      await client.from('user_expenses').upsert({
+        'id': expense.id,
+        'user_id': user.id,
+        'title': expense.title,
+        'amount': expense.amount,
+        'date': expense.date.toIso8601String(),
+        'category': expense.category,
+        'currency': expense.currency,
+        'attached_file_path': expense.attachedFilePath,
+      });
+    } catch (e) {
+      // Ignorar fallo de subida, se quedará offline y se podría sincronizar después
+      print("Error syncing expense to cloud: $e");
+    }
+  }
+
+  static Future<void> deleteExpense(String expenseId) async {
+    final user = currentUser;
+    if (user == null) return;
+    try {
+      await client.from('user_expenses').delete().eq('id', expenseId).eq('user_id', user.id);
+    } catch (e) {
+      print("Error deleting expense in cloud: $e");
+    }
+  }
+
+  static Future<List<Expense>> fetchUserExpenses() async {
+    final user = currentUser;
+    if (user == null) return [];
+
+    try {
+      final response = await client.from('user_expenses').select().eq('user_id', user.id);
+      return (response as List).map((data) => Expense(
+        id: data['id'],
+        title: data['title'],
+        amount: (data['amount'] as num).toDouble(),
+        date: DateTime.parse(data['date']),
+        category: data['category'],
+        currency: data['currency'],
+        attachedFilePath: data['attached_file_path'],
+      )).toList();
+    } catch (e) {
+      print("Error fetching expenses from cloud: $e");
+      return [];
+    }
   }
 }

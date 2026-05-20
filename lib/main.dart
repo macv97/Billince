@@ -30,6 +30,23 @@ Future<void> main() async {
     ..clear()
     ..addAll(await LocalDatabase.getShoppingLists());
 
+  // Merge with Cloud if logged in
+  if (SupabaseRepository.isAuthenticated) {
+    try {
+      final cloudExpenses = await SupabaseRepository.fetchUserExpenses();
+      for (var cloudExp in cloudExpenses) {
+        if (!AppData.expenses.any((localExp) => localExp.id == cloudExp.id)) {
+          AppData.expenses.add(cloudExp);
+          await LocalDatabase.insertExpense(cloudExp); // Save to local for offline
+        }
+      }
+      // Sort expenses by date DESC after merge
+      AppData.expenses.sort((a, b) => b.date.compareTo(a.date));
+    } catch (e) {
+      debugPrint("Failed to sync initial expenses: $e");
+    }
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => SettingsProvider(),
