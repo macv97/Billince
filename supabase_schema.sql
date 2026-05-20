@@ -44,3 +44,40 @@ CREATE TABLE IF NOT EXISTS group_members (
 ALTER TABLE group_members ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can view members" ON group_members FOR SELECT USING (true);
 CREATE POLICY "Anyone can join" ON group_members FOR INSERT WITH CHECK (true);
+
+-- 4. Listas de la compra sincronizadas
+CREATE TABLE IF NOT EXISTS user_shopping_lists (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES auth.users NOT NULL,
+  title TEXT NOT NULL,
+  date_created TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+ALTER TABLE user_shopping_lists ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their shopping lists" ON user_shopping_lists FOR ALL USING (auth.uid() = user_id);
+
+CREATE TABLE IF NOT EXISTS user_checklist_items (
+  id TEXT PRIMARY KEY,
+  list_id TEXT REFERENCES user_shopping_lists(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  is_done BOOLEAN NOT NULL DEFAULT false,
+  price NUMERIC NOT NULL DEFAULT 0.0
+);
+
+ALTER TABLE user_checklist_items ENABLE ROW LEVEL SECURITY;
+-- Por simplicidad en inserción, permitimos todo a auth.users (en producción usar EXISTS con user_shopping_lists)
+CREATE POLICY "Users can manage their checklist items" ON user_checklist_items FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- 5. Gastos de los grupos compartidos
+CREATE TABLE IF NOT EXISTS shared_expenses (
+  id TEXT PRIMARY KEY,
+  group_id TEXT NOT NULL,
+  payer TEXT NOT NULL,
+  title TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  participants TEXT -- JSON or comma-separated string
+);
+
+ALTER TABLE shared_expenses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can manage shared expenses" ON shared_expenses FOR ALL USING (true);

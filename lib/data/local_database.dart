@@ -121,6 +121,9 @@ class LocalDatabase {
         'price': item.price,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
+    
+    // Backup to cloud if authenticated
+    SupabaseRepository.syncShoppingList(list);
   }
 
   static Future<List<ShoppingList>> getShoppingLists() async {
@@ -151,6 +154,9 @@ class LocalDatabase {
     final db = await database;
     await db.delete('checklist_items', where: 'list_id = ?', whereArgs: [id]);
     await db.delete('shopping_lists', where: 'id = ?', whereArgs: [id]);
+    
+    // Remove from cloud if authenticated
+    SupabaseRepository.deleteShoppingList(id);
   }
 
   static Future<void> updateChecklistItem(ChecklistItem item, String listId) async {

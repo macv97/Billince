@@ -42,8 +42,17 @@ Future<void> main() async {
       }
       // Sort expenses by date DESC after merge
       AppData.expenses.sort((a, b) => b.date.compareTo(a.date));
+
+      final cloudLists = await SupabaseRepository.fetchUserShoppingLists();
+      for (var cloudList in cloudLists) {
+        if (!AppData.shoppingLists.any((localList) => localList.id == cloudList.id)) {
+          AppData.shoppingLists.add(cloudList);
+          await LocalDatabase.insertShoppingList(cloudList);
+        }
+      }
+      AppData.shoppingLists.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
     } catch (e) {
-      debugPrint("Failed to sync initial expenses: $e");
+      debugPrint("Failed to sync initial cloud data: $e");
     }
   }
 

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/expense.dart';
+import '../models/checklist_item.dart';
+import '../models/shared_expense.dart';
 import 'app_data.dart';
 
 /// Supabase repository — For shared groups and personal data backup.
@@ -92,6 +94,97 @@ class SupabaseRepository {
     } catch (e) {
       print("Error fetching expenses from cloud: $e");
       return [];
+    }
+  }
+
+  // ── Personal Shopping Lists Sync (Cloud Backup) ─────────────
+
+  static Future<void> syncShoppingList(ShoppingList list) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    try {
+      await client.from('user_shopping_lists').upsert({
+        'id': list.id,
+        'user_id': user.id,
+        'title': list.title,
+        'date_created': list.dateCreated.toIso8601String(),
+      });
+
+      // Sync items
+      for (var item in list.items) {
+        await client.from('user_checklist_items').upsert({
+          'id': item.id,
+          'list_id': list.id,
+          'title': item.title,
+          'is_done': item.isDone,
+          'price': item.price,
+        });
+      }
+    } catch (e) {
+      print("Error syncing shopping list: $e");
+    }
+  }
+
+  static Future<void> deleteShoppingList(String listId) async {
+    final user = currentUser;
+    if (user == null) return;
+    try {
+      await client.from('user_shopping_lists').delete().eq('id', listId).eq('user_id', user.id);
+    } catch (e) {
+      print("Error deleting shopping list: $e");
+    }
+  }
+
+  static Future<List<ShoppingList>> fetchUserShoppingLists() async {
+    final user = currentUser;
+    if (user == null) return [];
+
+    try {
+      final listResponse = await client.from('user_shopping_lists').select().eq('user_id', user.id);
+      final List<ShoppingList> result = [];
+      
+      for (var listData in listResponse as List) {
+        final listId = listData['id'];
+        final itemsResponse = await client.from('user_checklist_items').select().eq('list_id', listId);
+        
+        final items = (itemsResponse as List).map((i) => ChecklistItem(
+          id: i['id'],
+          title: i['title'],
+          isDone: i['is_done'],
+          price: (i['price'] as num).toDouble(),
+        )).toList();
+
+        result.add(ShoppingList(
+          id: listId,
+          title: listData['title'],
+          dateCreated: DateTime.parse(listData['date_created']),
+          items: items,
+        ));
+      }
+      return result;
+    } catch (e) {
+      print("Error fetching shopping lists: $e");
+      return [];
+    }
+  }
+
+  // ── Shared Expenses Sync ─────────────
+
+  static Future<void> syncSharedExpense(SharedExpense expense, String groupId) async {
+    // Unlike personal, shared events are uploaded whether you are owner or member
+    try {
+      await client.from('shared_expenses').upsert({
+        'id': expense.id,
+        'group_id': groupId,
+        'payer': expense.payer,
+        'title': expense.title,
+        'amount': expense.amount,
+        'date': expense.date.toIso8601String(),
+        'participants': expense.participants.join(','),
+      });
+    } catch (e) {
+      print("Error syncing shared expense: $e");
     }
   }
 }

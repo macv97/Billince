@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import 'dart:math';
 import '../models/shared_group.dart';
 import '../models/shared_expense.dart';
@@ -576,19 +577,22 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
 
                         setState(() {
                           if (existingExpense == null) {
-                            widget.group.expenses.insert(0, SharedExpense(
-                              id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            final newExp = SharedExpense(
+                              id: const Uuid().v4(),
                               title: title,
                               amount: amount,
                               payer: selectedPayer,
                               participants: selectedParticipants,
                               date: DateTime.now(),
-                            ));
+                            );
+                            widget.group.expenses.insert(0, newExp);
+                            SupabaseRepository.syncSharedExpense(newExp, widget.group.id);
                           } else {
                             existingExpense.title = title;
                             existingExpense.amount = amount;
                             existingExpense.payer = selectedPayer;
                             existingExpense.participants = selectedParticipants;
+                            SupabaseRepository.syncSharedExpense(existingExpense, widget.group.id);
                           }
                         });
                         Navigator.pop(context);
