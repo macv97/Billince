@@ -44,7 +44,7 @@ class MainMenuScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: 16.0),
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
-              onTap: () => _showSettingsSheet(context),
+              onTap: () => _showProfileSheet(context),
               child: Stack(
                 children: [
                   CircleAvatar(
@@ -228,91 +228,54 @@ class MainMenuScreen extends StatelessWidget {
     );
   }
 
-  void _showSettingsSheet(BuildContext context) {
+  void _showProfileSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
-        return Consumer<SettingsProvider>(
-          builder: (context, settings, child) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  ListTile(
-                    leading: const Icon(Icons.dark_mode, color: Colors.indigo),
-                    title: const Text('Tema'),
-                    trailing: DropdownButton<ThemeMode>(
-                      value: settings.themeMode,
-                      underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: ThemeMode.system, child: Text('Automático')),
-                        DropdownMenuItem(value: ThemeMode.light, child: Text('Claro')),
-                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) settings.setThemeMode(v);
-                      },
+        final isLogged = SupabaseRepository.isAuthenticated;
+        final userEmail = SupabaseRepository.currentUser?.email ?? 'Usuario no identificado';
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  backgroundColor: isLogged ? const Color(0xFF10B981).withOpacity(0.2) : Colors.blueGrey.withOpacity(0.2),
+                  radius: 40,
+                  child: Icon(Icons.person_rounded, size: 40, color: isLogged ? const Color(0xFF10B981) : Colors.blueGrey),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isLogged ? 'Perfil Sincronizado' : 'Modo Offline',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isLogged ? userEmail : 'Los datos se guardan solo en este dispositivo.',
+                  style: TextStyle(fontSize: 14, color: Colors.blueGrey.shade400),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isLogged ? Colors.red.shade50 : Theme.of(context).colorScheme.primary,
+                      foregroundColor: isLogged ? Colors.red : Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.color_lens, color: Colors.orange),
-                    title: const Text('Color Principal'),
-                    trailing: DropdownButton<int>(
-                      value: settings.interfaceColor.toARGB32(),
-                      underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: 0xFF0F172A, child: Text('Midnight Blue')),
-                        DropdownMenuItem(value: 0xFF4B0082, child: Text('Indigo')),
-                        DropdownMenuItem(value: 0xFF800000, child: Text('Maroon')),
-                        DropdownMenuItem(value: 0xFF2F4F4F, child: Text('Slate Gray')),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) settings.setInterfaceColor(Color(v));
-                      },
-                    ),
-                  ),
-                  const Divider(),
-                  const Text('Accesibilidad', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
-                  ListTile(
-                    leading: const Icon(Icons.visibility, color: Colors.teal),
-                    title: const Text('Modo Daltonismo'),
-                    trailing: DropdownButton<ColorBlindnessMode>(
-                      value: settings.colorBlindnessMode,
-                      underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: ColorBlindnessMode.none, child: Text('Normal')),
-                        DropdownMenuItem(value: ColorBlindnessMode.protanopia, child: Text('Protanopia')),
-                        DropdownMenuItem(value: ColorBlindnessMode.deuteranopia, child: Text('Deuteranopia')),
-                        DropdownMenuItem(value: ColorBlindnessMode.tritanopia, child: Text('Tritanopia')),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) settings.setColorBlindnessMode(v);
-                      },
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.text_increase, color: Colors.teal),
-                    title: const Text('Tamaño de Texto'),
-                    subtitle: Slider(
-                      value: settings.textScaleFactor,
-                      min: 1.0,
-                      max: 1.5,
-                      divisions: 5,
-                      label: '${settings.textScaleFactor}x',
-                      onChanged: (v) => settings.setTextScaleFactor(v),
-                    ),
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.redAccent),
-                    title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                    onTap: () {
-                      SupabaseRepository.signOut(); // Asynchronous logout in background
+                    icon: Icon(isLogged ? Icons.logout : Icons.login),
+                    label: Text(isLogged ? 'Cerrar sesión' : 'Iniciar sesión / Registrarse'),
+                    onPressed: () {
+                      Navigator.pop(context); // Close sheet
+                      if (isLogged) {
+                        SupabaseRepository.signOut();
+                      }
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
@@ -320,11 +283,10 @@ class MainMenuScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-            );
-          },
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
