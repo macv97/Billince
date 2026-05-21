@@ -195,10 +195,11 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
                 onPressed: () async {
                   final link = linkController.text.trim();
                   if (link.isNotEmpty) {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(context); // close sheet
                     
                     if (!SupabaseRepository.isAuthenticated) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes iniciar sesión para unirte.')));
+                      messenger.showSnackBar(const SnackBar(content: Text('Debes iniciar sesión para unirte.')));
                       return;
                     }
                     
@@ -211,9 +212,9 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
                     
                     try {
                       await SupabaseRepository.joinSharedGroup(groupId);
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unido con éxito. (Datos en la nube)')));
+                      messenger.showSnackBar(const SnackBar(content: Text('Unido con éxito. (Datos en la nube)')));
                     } catch (e) {
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
                     }
                   }
                 },
