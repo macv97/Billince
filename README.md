@@ -35,6 +35,24 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 - **Invitaciones a Gastos Compartidos:** Implementar un backend en Supabase y Deep Linking nativo funcional para que el enlace o QR generado permita a cualquier amigo abrir la app, unirse al instante al evento y colaborar en la misma lista.
 - **Cálculo cruzado:** Capacidad de ver quién debe qué a quién y enviar el recordatorio en directo de las deudas en ese mismo instante a todos los usuarios en la nube vinculados al grupo.
 
+### 🔴 PENDIENTE: Vinculación de Eventos Compartidos por Cuenta (Próxima Sesión)
+
+**Objetivo:** Los eventos/grupos compartidos deben estar vinculados a la cuenta de usuario en Supabase, no al almacenamiento local.
+
+**Ciclo de uso esperado:**
+1. El usuario crea un evento → se guarda en Supabase vinculado a su `user_id` (tabla `shared_groups` + `group_members`).
+2. Copia el link (`billince.app/join/{group_id}`) o QR y lo comparte.
+3. El receptor pega el link o escanea el QR → se inserta en `group_members` → el evento aparece en su cuenta.
+4. Si el usuario cierra sesión y abre con otra cuenta, **NO ve los eventos de la cuenta anterior** a menos que se una vía enlace.
+
+**Cambios necesarios:**
+- [ ] Al crear un grupo en `shared_expenses_screen.dart`, hacer `upsert` en `shared_groups` con `created_by = user_id` y auto-insertar al creador en `group_members`.
+- [ ] Añadir `SupabaseRepository.createSharedGroup()` y `fetchUserGroups()` (SELECT grupos donde el usuario sea miembro vía JOIN con `group_members`).
+- [ ] En `main.dart`, al hacer merge de datos cloud, cargar los grupos del usuario desde Supabase y poblar `AppData.sharedGroups`.
+- [ ] Los gastos de cada grupo (`shared_expenses`) deben cargarse al entrar en el detalle del grupo.
+- [ ] Al cerrar sesión, limpiar `AppData.sharedGroups` para que la siguiente cuenta arranque limpia.
+- [ ] `joinSharedGroup()` ya existe; falta que tras unirse, se descarguen los datos del grupo y se añadan a `AppData.sharedGroups` localmente.
+
 ---
 
 ## 🛠️ Stack Tecnológico
