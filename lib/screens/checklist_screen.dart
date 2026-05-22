@@ -4,6 +4,7 @@ import '../data/local_database.dart';
 import '../models/checklist_item.dart';
 import 'shopping_list_detail_screen.dart';
 import 'shopping_insights_screen.dart';
+import 'shared_checklists_tab.dart';
 
 class ChecklistScreen extends StatefulWidget {
   const ChecklistScreen({super.key});
@@ -13,6 +14,49 @@ class ChecklistScreen extends StatefulWidget {
 }
 
 class _ChecklistScreenState extends State<ChecklistScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
+        appBar: AppBar(
+          title: const Text('Checklists', style: TextStyle(fontWeight: FontWeight.w800)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: false,
+          bottom: TabBar(
+            indicatorColor: primaryColor,
+            labelColor: primaryColor,
+            unselectedLabelColor: Colors.blueGrey,
+            tabs: const [
+              Tab(text: 'Personales'),
+              Tab(text: 'Compartidas'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            _PersonalChecklistsTab(),
+            SharedChecklistsTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PersonalChecklistsTab extends StatefulWidget {
+  const _PersonalChecklistsTab();
+
+  @override
+  State<_PersonalChecklistsTab> createState() => _PersonalChecklistsTabState();
+}
+
+class _PersonalChecklistsTabState extends State<_PersonalChecklistsTab> {
   void _createNewList() {
     final controller = TextEditingController();
     showDialog(
@@ -72,29 +116,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text('Mis Listas', style: TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: TextButton.icon(
-              icon: Icon(Icons.bar_chart_rounded, color: primaryColor, size: 20),
-              label: Text('Estadísticas', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
-              style: TextButton.styleFrom(
-                backgroundColor: primaryColor.withOpacity(0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ShoppingInsightsScreen()));
-              },
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
       body: AppData.shoppingLists.isEmpty
           ? Center(
               child: Column(

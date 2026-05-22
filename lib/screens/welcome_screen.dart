@@ -268,6 +268,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   await SupabaseRepository.signUp(email, password);
                                 }
                                 if (mounted) {
+                                  // Recargar datos de la nube tras login
+                                  try {
+                                    final cloudGroups = await SupabaseRepository.fetchUserGroups();
+                                    AppData.sharedGroups.clear();
+                                    AppData.sharedGroups.addAll(cloudGroups);
+                                    
+                                    final cloudChecklists = await SupabaseRepository.fetchUserSharedChecklists();
+                                    AppData.sharedChecklists.clear();
+                                    AppData.sharedChecklists.addAll(cloudChecklists);
+                                    
+                                    final cloudExpenses = await SupabaseRepository.fetchUserExpenses();
+                                    for (var ce in cloudExpenses) {
+                                      if (!AppData.expenses.any((e) => e.id == ce.id)) {
+                                        AppData.expenses.add(ce);
+                                      }
+                                    }
+                                    AppData.expenses.sort((a, b) => b.date.compareTo(a.date));
+                                  } catch (_) {}
+                                  
                                   Navigator.pop(ctx);
                                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainMenuScreen()));
                                 }

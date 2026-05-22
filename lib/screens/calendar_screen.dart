@@ -343,19 +343,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               event.title,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                decoration: event.isDone ? TextDecoration.lineThrough : null,
+                                decoration: (event.isDone && event.category != 'history') ? TextDecoration.lineThrough : null,
                               ),
                             ),
                             subtitle: Text(
                               '${event.dateTime.hour.toString().padLeft(2, '0')}:${event.dateTime.minute.toString().padLeft(2, '0')}${event.description != null ? ' · ${event.description}' : ''}',
                               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                             ),
-                            trailing: Checkbox(
-                              value: event.isDone,
-                              activeColor: const Color(0xFF10B981),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                              onChanged: (val) => setState(() => event.isDone = val ?? false),
-                            ),
+                            trailing: event.category == 'history'
+                                ? null
+                                : Checkbox(
+                                    value: event.isDone,
+                                    activeColor: const Color(0xFF10B981),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                    onChanged: (val) {
+                                      setState(() => event.isDone = val ?? false);
+                                      // LocalDatabase.updateCalendarEvent(event); // Optional: if update method exists
+                                    },
+                                  ),
                           ),
                         ),
                       );

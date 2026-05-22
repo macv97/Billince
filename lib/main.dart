@@ -29,6 +29,9 @@ Future<void> main() async {
   AppData.shoppingLists
     ..clear()
     ..addAll(await LocalDatabase.getShoppingLists());
+  AppData.calendarEvents
+    ..clear()
+    ..addAll(await LocalDatabase.getCalendarEvents());
 
   // Merge with Cloud if logged in
   if (SupabaseRepository.isAuthenticated) {
@@ -51,6 +54,15 @@ Future<void> main() async {
         }
       }
       AppData.shoppingLists.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
+
+      // Load Shared Groups from Supabase
+      final cloudGroups = await SupabaseRepository.fetchUserGroups();
+      AppData.sharedGroups.clear();
+      AppData.sharedGroups.addAll(cloudGroups);
+      
+      final cloudChecklists = await SupabaseRepository.fetchUserSharedChecklists();
+      AppData.sharedChecklists.clear();
+      AppData.sharedChecklists.addAll(cloudChecklists);
     } catch (e) {
       debugPrint("Failed to sync initial cloud data: $e");
     }

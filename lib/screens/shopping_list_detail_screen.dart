@@ -44,7 +44,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                 subtitle: const Text('Escribe el nombre del producto'),
                 onTap: () {
                   Navigator.pop(context);
-                  _addItemManually();
+                  _showEditItemDialog();
                 },
               ),
               const SizedBox(height: 8),
@@ -82,16 +82,16 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     );
   }
 
-  void _addItemManually() {
-    final controller = TextEditingController();
+  void _showEditItemDialog({ChecklistItem? existingItem}) {
+    final controller = TextEditingController(text: existingItem?.title ?? '');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Añadir producto'),
+        title: Text(existingItem == null ? 'Añadir producto' : 'Editar producto'),
         content: TextField(
           controller: controller,
-          autofocus: true,
+          autofocus: existingItem == null,
           decoration: InputDecoration(
             hintText: 'Ej. Leche, Pan, Huevos...',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -109,18 +109,25 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
             onPressed: () {
               final title = controller.text.trim();
               if (title.isNotEmpty) {
-                final newItem = ChecklistItem(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  title: title,
-                );
-                setState(() {
-                  widget.shoppingList.items.insert(0, newItem);
-                });
-                LocalDatabase.insertChecklistItem(newItem, widget.shoppingList.id);
+                if (existingItem != null) {
+                  setState(() {
+                    existingItem.title = title;
+                  });
+                  LocalDatabase.updateChecklistItem(existingItem, widget.shoppingList.id);
+                } else {
+                  final newItem = ChecklistItem(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    title: title,
+                  );
+                  setState(() {
+                    widget.shoppingList.items.insert(0, newItem);
+                  });
+                  LocalDatabase.insertChecklistItem(newItem, widget.shoppingList.id);
+                }
               }
               Navigator.pop(context);
             },
-            child: const Text('Añadir'),
+            child: Text(existingItem == null ? 'Añadir' : 'Guardar'),
           ),
         ],
       ),
@@ -318,6 +325,10 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                                 decoration: item.isDone ? TextDecoration.lineThrough : null,
                                 color: item.isDone ? Colors.blueGrey.shade300 : (isDark ? Colors.white : Colors.black87),
                               ),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                              onPressed: () => _showEditItemDialog(existingItem: item),
                             ),
                           ),
                         ),

@@ -5,6 +5,7 @@ class SharedFile {
   final String type; // 'pdf', 'jpg', 'png'
   final DateTime dateAdded;
   final String uploadedBy;
+  final String? localPath;
 
   SharedFile({
     required this.id,
@@ -13,5 +14,6 @@ class SharedFile {
     required this.type,
     required this.dateAdded,
     required this.uploadedBy,
+    this.localPath,
   });
 }

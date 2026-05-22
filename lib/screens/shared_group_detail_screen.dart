@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:math';
+import 'dart:io';
 import '../models/shared_group.dart';
 import '../models/shared_expense.dart';
 import '../models/shared_file.dart';
@@ -10,6 +11,8 @@ import 'welcome_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 class SharedGroupDetailScreen extends StatefulWidget {
   final SharedExpenseGroup group;
@@ -27,6 +30,23 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this); // Gastos, Saldos, Archivos
+    _loadExpenses();
+  }
+
+  Future<void> _loadExpenses() async {
+    if (SupabaseRepository.isAuthenticated) {
+      final expenses = await SupabaseRepository.fetchSharedExpenses(widget.group.id);
+      setState(() {
+        widget.group.expenses = expenses;
+        // Collect all distinct participants as members dynamically
+        final memberSet = <String>{...widget.group.members};
+        for (var e in expenses) {
+          memberSet.add(e.payer);
+          memberSet.addAll(e.participants);
+        }
+        widget.group.members = memberSet.toList();
+      });
+    }
   }
 
   @override
@@ -201,13 +221,26 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                       itemCount: widget.group.members.length,
                       itemBuilder: (context, index) {
                         final member = widget.group.members[index];
+                        final isMe = member == widget.group.myMemberName || (widget.group.myMemberName == null && member == 'Tú');
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
-                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                            child: Text(member.substring(0, 1).toUpperCase()),
+                            backgroundColor: isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer,
+                            child: Text(member.substring(0, 1).toUpperCase(), style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
                           ),
-                          title: Text(member, style: const TextStyle(fontWeight: FontWeight.w500)),
+                          title: Row(
+                            children: [
+                              Text(member, style: TextStyle(fontWeight: isMe ? FontWeight.bold : FontWeight.w500)),
+                              if (isMe) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(4)),
+                                  child: const Text('Tú', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                )
+                              ]
+                            ],
+                          ),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                             onPressed: () {
@@ -385,7 +418,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                 title: const Text('Hacer una Foto'),
                 onTap: () {
                   Navigator.pop(context);
-                  _simulateFileUpload('Foto_${DateTime.now().millisecondsSinceEpoch}.jpg', 'jpg', onFileAdded);
+                  _pickImage(ImageSource.camera, onFileAdded);
                 },
               ),
               ListTile(
@@ -393,7 +426,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                 title: const Text('Subir desde Galería'),
                 onTap: () {
                   Navigator.pop(context);
-                  _simulateFileUpload('Imagen_Galeria.png', 'png', onFileAdded);
+                  _pickImage(ImageSource.gallery, onFileAdded);
                 },
               ),
               ListTile(
@@ -402,7 +435,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                 subtitle: const Text('Facturas o recibos (Max 5MB)'),
                 onTap: () {
                   Navigator.pop(context);
-                  _simulateFileUpload('Factura_Restaurante.pdf', 'pdf', onFileAdded);
+                  _pickFile(onFileAdded);
                 },
               ),
             ],
@@ -412,45 +445,74 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
     );
   }
 
-  void _simulateFileUpload(String name, String type, Function(SharedFile) onFileAdded) {
-    // Simulate a random size between 0.5MB and 7MB
-    final random = Random();
-    final sizeMb = 0.5 + random.nextDouble() * 6.5; 
+  Future<void> _pickImage(ImageSource source, Function(SharedFile) onFileAdded) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source, imageQuality: 80);
+      if (pickedFile == null) return;
+      
+      _processPickedFile(pickedFile.path, pickedFile.name, onFileAdded);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al obtener imagen: $e')));
+    }
+  }
+
+  Future<void> _pickFile(Function(SharedFile) onFileAdded) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        _processPickedFile(result.files.single.path!, result.files.single.name, onFileAdded);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al seleccionar archivo: $e')));
+    }
+  }
+  
+  Future<void> _processPickedFile(String path, String name, Function(SharedFile) onFileAdded) async {
+    final file = File(path);
+    if (!file.existsSync()) return;
+    
+    final sizeInBytes = file.lengthSync();
+    final sizeMb = sizeInBytes / (1024 * 1024);
     
     if (sizeMb > 5.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: El archivo "${name}" pesa ${sizeMb.toStringAsFixed(1)}MB. El límite de seguridad es 5MB.'),
+          content: Text('Error: El archivo pesa ${sizeMb.toStringAsFixed(1)}MB. El límite es 5MB.'),
           backgroundColor: Colors.redAccent,
         )
       );
       return;
     }
+    
+    String type = 'pdf';
+    final lowerName = name.toLowerCase();
+    if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) type = 'jpg';
+    if (lowerName.endsWith('.png')) type = 'png';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Procesando archivo...'), duration: Duration(seconds: 1)),
+    final sharedFile = SharedFile(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      sizeMb: sizeMb,
+      type: type,
+      dateAdded: DateTime.now(),
+      uploadedBy: widget.group.myMemberName ?? 'Tú',
+      localPath: path,
     );
-
-    Future.delayed(const Duration(seconds: 1), () {
-      final file = SharedFile(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
-        sizeMb: sizeMb,
-        type: type,
-        dateAdded: DateTime.now(),
-        uploadedBy: widget.group.members.first, // Just demo logic
-      );
-      
-      setState(() {
-        widget.group.files.insert(0, file);
-      });
-      
-      onFileAdded(file);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Archivo adjuntado con éxito.')),
-      );
+    
+    setState(() {
+      widget.group.files.insert(0, sharedFile);
     });
+    
+    onFileAdded(sharedFile);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Archivo adjuntado con éxito.')),
+    );
   }
 
   void _showExpenseForm({SharedExpense? existingExpense}) {
@@ -500,19 +562,31 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                     const SizedBox(height: 20),
                     TextField(
                       controller: titleController,
-                      decoration: const InputDecoration(labelText: 'Concepto', border: OutlineInputBorder(), prefixIcon: Icon(Icons.description)),
+                      decoration: InputDecoration(
+                        labelText: 'Concepto', 
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), 
+                        prefixIcon: const Icon(Icons.description)
+                      ),
                       textCapitalization: TextCapitalization.sentences,
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: amountController,
-                      decoration: InputDecoration(labelText: 'Importe Total (${widget.group.currency})', border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.attach_money)),
+                      decoration: InputDecoration(
+                        labelText: 'Importe Total (${widget.group.currency})', 
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), 
+                        prefixIcon: const Icon(Icons.paid)
+                      ),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: widget.group.members.contains(selectedPayer) ? selectedPayer : widget.group.members.first,
-                      decoration: const InputDecoration(labelText: '¿Quién pagó?', border: OutlineInputBorder(), prefixIcon: Icon(Icons.payment)),
+                      decoration: InputDecoration(
+                        labelText: '¿Quién pagó?', 
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), 
+                        prefixIcon: const Icon(Icons.payment)
+                      ),
                       items: widget.group.members.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                       onChanged: (val) {
                         if (val != null) setSheetState(() => selectedPayer = val);
@@ -562,7 +636,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        backgroundColor: const Color(0xFF0F172A),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,
                       ),
                       onPressed: () {
@@ -683,8 +757,9 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
       appBar: AppBar(
-        title: Text(widget.group.title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: Colors.transparent,
+        title: Text(widget.group.title, style: TextStyle(fontWeight: FontWeight.w800, color: isDark ? Colors.white : Colors.black87)),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.transparent,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
@@ -823,13 +898,26 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
               const Text('Positivo: Le deben dinero | Negativo: Debe dinero', style: TextStyle(color: Colors.grey, fontSize: 12)),
               const SizedBox(height: 16),
               ...widget.group.members.map((m) {
+                final isMe = m == widget.group.myMemberName || (widget.group.myMemberName == null && m == 'Tú');
                 final bal = balances[m] ?? 0.0;
                 final isPositive = bal > 0.01;
                 final isNegative = bal < -0.01;
                 final color = isPositive ? Colors.green : (isNegative ? Colors.red : Colors.grey);
                 return ListTile(
                   leading: CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Text(m.substring(0, 1), style: TextStyle(color: color, fontWeight: FontWeight.bold))),
-                  title: Text(m, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  title: Row(
+                    children: [
+                      Text(m, style: TextStyle(fontWeight: isMe ? FontWeight.bold : FontWeight.w500)),
+                      if (isMe) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(4)),
+                          child: const Text('Tú', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        )
+                      ]
+                    ],
+                  ),
                   trailing: Text(
                     '${bal > 0 ? '+' : ''}$c${bal.abs().toStringAsFixed(2)}',
                     style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),

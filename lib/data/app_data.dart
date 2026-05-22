@@ -1,7 +1,7 @@
 import '../models/expense.dart';
 import '../models/shared_group.dart';
 import '../models/checklist_item.dart';
-
+import '../models/shared_checklist.dart';
 class AppData {
   static String currency = '€'; // Default currency EUR
 
@@ -22,6 +22,9 @@ class AppData {
 
   // Shopping lists
   static final List<ShoppingList> shoppingLists = [];
+
+  // Shared Checklists
+  static final List<SharedChecklist> sharedChecklists = [];
 
   // Calendar events
   static final List<CalendarEvent> calendarEvents = [];

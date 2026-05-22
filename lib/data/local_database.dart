@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import '../models/expense.dart';
 import '../models/checklist_item.dart';
 import 'supabase_repository.dart';
+import 'app_data.dart';
 
 /// SQLite local database for offline-first personal data persistence.
 /// Supabase is NOT used for personal data — only for shared expenses.
@@ -185,5 +186,38 @@ class LocalDatabase {
   }
 
   // ── Calendar Events ─────────────────────────────────────────
-  // (stub for future persistence — currently in-memory via AppData)
+
+  static Future<void> insertCalendarEvent(CalendarEvent event) async {
+    final db = await database;
+    await db.insert('calendar_events', {
+      'id': event.id,
+      'title': event.title,
+      'description': event.description,
+      'date_time': event.dateTime.toIso8601String(),
+      'end_date_time': event.endDateTime?.toIso8601String(),
+      'category': event.category,
+      'is_all_day': event.isAllDay ? 1 : 0,
+      'is_done': event.isDone ? 1 : 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  static Future<List<CalendarEvent>> getCalendarEvents() async {
+    final db = await database;
+    final rows = await db.query('calendar_events');
+    return rows.map((row) => CalendarEvent(
+      id: row['id'] as String,
+      title: row['title'] as String,
+      description: row['description'] as String?,
+      dateTime: DateTime.parse(row['date_time'] as String),
+      endDateTime: row['end_date_time'] != null ? DateTime.parse(row['end_date_time'] as String) : null,
+      category: row['category'] as String,
+      isAllDay: (row['is_all_day'] as int) == 1,
+      isDone: (row['is_done'] as int) == 1,
+    )).toList();
+  }
+
+  static Future<void> deleteCalendarEvent(String id) async {
+    final db = await database;
+    await db.delete('calendar_events', where: 'id = ?', whereArgs: [id]);
+  }
 }

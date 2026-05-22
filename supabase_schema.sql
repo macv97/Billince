@@ -81,3 +81,57 @@ CREATE TABLE IF NOT EXISTS shared_expenses (
 
 ALTER TABLE shared_expenses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can manage shared expenses" ON shared_expenses FOR ALL USING (true);
+
+-- 6. Listas de la compra compartidas
+CREATE TABLE IF NOT EXISTS shared_checklists (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  created_by UUID REFERENCES auth.users NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE shared_checklists ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Shared checklists visibility" ON shared_checklists FOR SELECT USING (true);
+CREATE POLICY "Shared checklists insertion" ON shared_checklists FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+-- 7. Miembros de las listas compartidas
+CREATE TABLE IF NOT EXISTS shared_checklist_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  list_id TEXT REFERENCES shared_checklists(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users,
+  guest_name TEXT,
+  joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(list_id, user_id)
+);
+
+ALTER TABLE shared_checklist_members ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Shared list members visibility" ON shared_checklist_members FOR SELECT USING (true);
+CREATE POLICY "Anyone can join shared list" ON shared_checklist_members FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update user id" ON shared_checklist_members FOR UPDATE USING (true);
+
+-- 8. Productos de las listas compartidas
+CREATE TABLE IF NOT EXISTS shared_checklist_items (
+  id TEXT PRIMARY KEY,
+  list_id TEXT REFERENCES shared_checklists(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  is_done BOOLEAN NOT NULL DEFAULT false,
+  tags TEXT,
+  added_by TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE shared_checklist_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can manage shared checklist items" ON shared_checklist_items FOR ALL USING (true);
+
+-- 9. Historial de acciones (Auditoría)
+CREATE TABLE IF NOT EXISTS shared_checklist_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  list_id TEXT REFERENCES shared_checklists(id) ON DELETE CASCADE,
+  action TEXT NOT NULL,
+  user_name TEXT NOT NULL,
+  item_title TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE shared_checklist_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can manage audit logs" ON shared_checklist_logs FOR ALL USING (true);

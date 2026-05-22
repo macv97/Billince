@@ -38,45 +38,39 @@ Como desarrollador principal de aplicaciones móviles con enfoque experto en **A
    → Opción: Continuar sin sesión (datos volátiles, funciones de IA deshabilitadas)
 
 2. LISTA DE LA COMPRA
-   → El usuario crea una lista antes de ir a comprar
-   → Añade productos manualmente o escaneando una foto con IA (requiere inicio de sesión)
-   → En el supermercado, va tachando los productos que compra
+   → El usuario crea una lista antes de ir a comprar.
+   → Añade productos manualmente o escaneando una foto de una lista escrita (100% Offline-First mediante OCR local).
+   → En el supermercado, va tachando los productos que compra.
    → ⚠️ NO se registra ningún importe aquí. Es solo un checklist.
 
 3. GESTIÓN DE GASTOS
-   → Tras la compra, el usuario escanea el TICKET con la cámara o galería (requiere inicio de sesión)
-   → La IA (Gemini multimodal en el servidor) extrae: nombre del comercio + importe TOTAL + lista de productos
-   → El gasto se guarda automáticamente en Supabase (tabla expenses)
-   → Los productos del ticket se crean como nueva ShoppingList en Supabase (items con is_done=true)
-   → Si la IA no detecta el total, se abre formulario manual pre-rellenado
-   → También se pueden añadir gastos manuales sin ticket
+   → Tras la compra, el usuario escanea el TICKET con la cámara o galería (100% Offline-First, no requiere internet).
+   → El motor local `TicketScanner` (Google ML Kit + Algoritmo geométrico) extrae: comercio, importe TOTAL y productos.
+   → El gasto se guarda localmente en SQLite y, si hay sesión iniciada, se respalda en Supabase (tabla user_expenses).
+   → Los productos del ticket se pueden añadir automáticamente como una ShoppingList en SQLite/Supabase.
+   → Si el escaneo automático no es seguro, se presenta un carrusel de burbujas interactivas con todos los importes detectados en el ticket para corrección instantánea con un toque.
+   → También se pueden añadir gastos manuales sin ticket.
 
 4. RESUMEN Y GRÁFICOS
-   → Lee de AppData.expenses (cargados desde Supabase al iniciar sesión)
-   │ Muestra: total acumulado, media, nº transacciones
-   └→ Desglose por categorías con barras + últimos gastos
+   → Lee de `LocalDatabase` / `AppData.expenses`.
+   │ Muestra: total acumulado, media, nº transacciones.
+   └→ Desglose por categorías con barras + últimos gastos.
 
 5. ANÁLISIS DE COMPRAS (Shopping Insights)
-   → Lee de AppData.shoppingLists (cargados desde Supabase)
-   → Muestra: productos más repetidos, día favorito, tasa de completado
-   → Gráfico de distribución semanal
-   └→ Lince IA Advisor: Envía estadísticas reales de usuario a la Edge Function para generar consejos personalizados en tiempo real
+   → Lee de `LocalDatabase` / `AppData.shoppingLists`.
+   → Muestra: productos más repetidos, día favorito, tasa de completado y gráfico de distribución semanal.
+   └→ Lince IA Advisor (Análisis Local): Genera consejos de compra automatizados directamente en el dispositivo analizando estadísticas y comportamiento del usuario, sin consumir APIs externas.
 ```
 
 ---
 
-## 🤖 Integración con IA Segura (Server-Side Architecture)
+## 🤖 Inteligencia On-Device y Visión Local (Offline-First Architecture)
 
-### ¿Qué modelo se usa y cómo se accede?
-*   **Modelo de Servidor:** `gemini-2.0-flash` (a través de Supabase Edge Functions).
-*   **Seguridad de la API Key:** La API Key de Gemini (`GEMINI_API_KEY`) reside **únicamente** como secreto encriptado en el backend de Supabase (`supabase secrets set`). **Se ha eliminado por completo del código cliente (.env, pubspec) para evitar ingeniería inversa en el APK.**
-*   **Middleware (Edge Function):** Se ha desarrollado la función `gemini-proxy` en Deno (Supabase) encargada de centralizar todas las peticiones a la API de Gemini.
-*   **Validación de JWT:** La Edge Function verifica la firma del token de autenticación (JWT) de Supabase antes de ejecutar cualquier llamada a Gemini. Esto **impide** el consumo no autorizado de cuota por usuarios no autenticados o llamadas externas maliciosas.
-
-### Gated AI (Protección de Recursos)
-El acceso a funciones de IA está protegido en el cliente:
-*   Si un usuario no autenticado intenta realizar un escaneo en `expenses_screen.dart` o `shopping_list_detail_screen.dart`, se le muestra el modal `_showLoginRequiredDialog()` bloqueando el acceso de forma amigable.
-*   En `shopping_insights_screen.dart`, el panel "Lince IA Advisor" muestra un estado informativo indicando que requiere inicio de sesión para habilitar el análisis de comportamiento.
+### ¿Cómo funciona el escaneo y reconocimiento?
+*   **Motor Local:** Google ML Kit Text Recognition (`google_mlkit_text_recognition`).
+*   **Algoritmo Espacial y NLP Local:** `TicketScanner` (en `lib/services/ticket_scanner.dart`) procesa la geometría de los bloques de texto (Bounding Boxes), agrupándolos por líneas horizontales para relacionar productos y precios, aplicando expresiones regulares defensivas y lógica difusa.
+*   **UX de Selección Rápida (Bubble Carousel):** En lugar de depender de llamadas lentas a la nube, la app extrae todos los posibles precios del ticket y los presenta en burbujas. Si el importe total detectado automáticamente no es el deseado, el usuario lo corrige seleccionando la burbuja correcta de un toque.
+*   **Privacidad y Rendimiento:** Cero APIs en la nube para procesamiento de imagen o texto. Todo el escaneo se ejecuta 100% de manera local y con latencia cero en el dispositivo. No se requiere inicio de sesión para escanear tickets ni listas.
 
 ---
 
@@ -96,19 +90,22 @@ El acceso a funciones de IA está protegido en el cliente:
 | `shopping_lists` | Cabecera de listas de la compra | `auth.uid() = user_id` |
 | `checklist_items` | Ítems de cada lista (relación FK con CASCADE) | `auth.uid() = user_id` |
 
-### Capa de datos: `SupabaseRepository`
+### Capa de datos y Backup: `SupabaseRepository`
 Archivo: `lib/data/supabase_repository.dart`
 
 | Método | Acción |
 |---|---|
 | `signIn(email, password)` | Login con email |
 | `signUp(email, password)` | Registro de nuevo usuario |
-| `signOut()` | Cierre de sesión y limpieza total de la caché `AppData` local |
-| `loadUserSettings()` | Carga moneda del usuario desde BD |
-| `loadInitialData()` | Carga expenses + shoppingLists del usuario |
-| `addExpense(expense)` | Inserta gasto en Supabase o AppData (fallback) |
-| `createShoppingListWithItems(title, items)` | Crea lista + items en Supabase o AppData (fallback) |
-| `callGemini(prompt, imageBytes)` | Llama a la Edge Function de manera segura adjuntando token JWT y controlando de manera robusta los errores del servidor (como rate limits 429) |
+| `signOut()` | Cierre de sesión del cliente de Supabase |
+| `joinSharedGroup(groupId)` | Une al usuario actual a un grupo compartido mediante su UUID |
+| `syncExpense(expense)` | Sincroniza gasto personal en la tabla `user_expenses` si está autenticado |
+| `deleteExpense(expenseId)` | Elimina el gasto en el backup de Supabase si está autenticado |
+| `fetchUserExpenses()` | Carga los gastos respaldados en la nube para poblar la app local |
+| `syncShoppingList(list)` | Respalda la lista y sus ítems en la nube si está autenticado |
+| `deleteShoppingList(listId)` | Elimina la lista de la compra de la nube si está autenticado |
+| `fetchUserShoppingLists()` | Carga las listas de la compra respaldadas en la nube |
+| `syncSharedExpense(expense, groupId)` | Sincroniza los gastos de grupos colaborativos en la nube |
 
 ---
 
@@ -131,12 +128,12 @@ Archivo: `lib/data/supabase_repository.dart`
 
 | Módulo | Archivo | Propósito |
 |---|---|---|
-| **WelcomeScreen** | `welcome_screen.dart` | Auth (Login/Registro Email), selector de moneda, Ajustes y Accesibilidad. Mensaje visual claro de limitación sin inicio de sesión. |
-| **Gestión de Gastos** | `expenses_screen.dart` | Escaneo IA de tickets seguro (Edge Function), gastos manuales, categorías, adjuntos, persistencia Supabase. |
-| **Gastos Compartidos** | `shared_expenses_screen.dart` | Grupos/eventos con liquidación inteligente de deudas. |
-| **Lista de la Compra** | `checklist_screen.dart` → `shopping_list_detail_screen.dart` | Multi-lista checklist con escaneo de productos por Edge Function, persistencia Supabase. |
-| **Análisis de Compras** | `shopping_insights_screen.dart` | Lince IA Advisor conectado al proxy server-side con prompts personalizados de hábitos y fallback robusto. |
-| **Resumen y Gráficos** | `summary_screen.dart` | Dashboard financiero con barras y últimos gastos. |
+| **WelcomeScreen** | `welcome_screen.dart` | Auth (Login/Registro Email), selector de moneda global, Ajustes y Accesibilidad. Permite usar toda la app sin registrarse. |
+| **Gestión de Gastos** | `expenses_screen.dart` | Escaneo local de tickets (ML Kit), gastos manuales, categorías, selección rápida por carrusel de burbujas, persistencia SQLite y backup Supabase. |
+| **Gastos Compartidos** | `shared_expenses_screen.dart` | Grupos/eventos colaborativos con liquidación inteligente de deudas. |
+| **Lista de la Compra** | `checklist_screen.dart` → `shopping_list_detail_screen.dart` | Multi-lista checklist con escaneo local de listas escritas por OCR, persistencia SQLite y backup Supabase. |
+| **Análisis de Compras** | `shopping_insights_screen.dart` | Lince IA Advisor con consejos automáticos generados localmente analizando patrones semanales y de consumo. |
+| **Resumen y Gráficos** | `summary_screen.dart` | Dashboard financiero con barras y desglose de gastos. |
 | **Calendario y Eventos** | `calendar_screen.dart` | Agenda personal con calendario mensual y categorías. |
 
 ---
@@ -162,22 +159,19 @@ Archivo: `lib/data/supabase_repository.dart`
 ## 🚧 Estado Actual y Pendientes (Roadmap)
 
 ### ✅ Completado
-- **Arquitectura de IA 100% segura**: Integración mediante Supabase Edge Functions (`gemini-proxy`).
-- **API Key oculta**: Reside únicamente como secreto de entorno del servidor.
-- **Validación server-side de JWT**: Solo los usuarios con sesión activa pueden realizar llamadas de IA.
-- **Protección de recursos en la interfaz (Gated AI)**: Diálogo descriptivo con candado en Gastos e Ítems si se intenta escanear sin estar autenticado.
-- **Análisis de Compras con IA real**: Lince IA Advisor ahora procesa estadísticas de compras reales de usuario mediante el proxy seguro.
-- **Control robusto de errores**: Parsing y mensajes claros para errores de cuota superada (429) y caídas de servicio.
-- Supabase Auth con Email (Login/Registro + validación de errores amigable).
-- Control de errores de Auth (formato de email, contraseña corta, credenciales inválidas, etc.).
+- **Escaneo 100% local y offline**: Google ML Kit y parseo geométrico local de tickets implementados con total fluidez.
+- **Carrusel Burbuja UX**: Selección y corrección instantánea de importes detectados en el ticket.
+- **Persistencia SQLite**: `LocalDatabase` almacena localmente gastos, listas de compra y checklist items.
+- **Sincronización híbrida a la nube**: Backup automático en Supabase de gastos y listas si la sesión está iniciada.
+- **Análisis de Compras Local**: Lince IA Advisor integrado con generación local de recomendaciones sobre hábitos financieros.
+- **Supabase Auth**: Soporte completo para inicio de sesión y registro de cuentas de usuario mediante correo electrónico.
 
 ### 🔴 Pendiente (Prioridad Alta)
-- **[UX]** Finalizar el texto de aviso en la pantalla de inicio sobre la imposibilidad de usar escaneo de IA en modo offline/invitado.
-- **[Auth]** Implementar Google Sign-In real (actualmente muestra snack "en desarrollo").
-- **[Auth]** Integrar inicio de sesión biométrico / huella dactilar tras la primera autenticación para evitar escribir credenciales continuamente.
+- **[UX]** Finalizar el texto de aviso en la pantalla de inicio aclarando el modo offline/invitado e incentivar el inicio de sesión.
+- **[Auth]** Implementar Google Sign-In real.
+- **[Auth]** Integrar inicio de sesión biométrico / huella dactilar tras la primera autenticación.
 - **[UX]** Activar funcionalidad completa en el botón "Mi Perfil" al iniciar la aplicación.
 - **[Branding]** Homologar el icono de lanzamiento de la app (launcher icon) en dispositivos con el logo circular del ojo de lince de la UI.
-- **[IA]** Diseñar mecanismos de resiliencia ante límites de llamadas 429 de la API (ej. encolamiento asíncrono, caché local de respuestas comunes o rotación inteligente de claves).
 - **[Gastos]** Soporte para actualización (UPDATE) de gastos en Supabase (actualmente solo en local).
 
 ### 🟡 Pendiente (Roadmap)

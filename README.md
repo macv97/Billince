@@ -27,31 +27,21 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 - Ajustes de accesibilidad (tipografía ampliable, filtros para daltonismo) y menús perfectamente alineados.
 - Transiciones fluidas, modales redondeados y una coherencia visual absoluta basándose en colores corporativos limpios y elegantes.
 
+### 5. Listas Compartidas en Tiempo Real y Registro de Actividad
+- **Listas Dinámicas:** Comparte listas de la compra mediante enlace o QR. Los cambios (añadir, editar, completar o eliminar productos y etiquetas) se sincronizan en **tiempo real** para todos los integrantes.
+- **Historial de Acciones Compartido:** Un registro detallado de quién añadió, modificó o eliminó qué, visible para todos.
+- **Calendario Integrado:** Registro automático de la actividad de la app (uniones a listas, gastos creados) como eventos visuales en el módulo Calendario.
+
 ---
 
 ## 🚀 Próximas Funcionalidades (Roadmap)
 
-### Colaboración Total en Tiempo Real (Sincronización Funcional de Deep Links)
-- **Invitaciones a Gastos Compartidos:** Implementar un backend en Supabase y Deep Linking nativo funcional para que el enlace o QR generado permita a cualquier amigo abrir la app, unirse al instante al evento y colaborar en la misma lista.
-- **Cálculo cruzado:** Capacidad de ver quién debe qué a quién y enviar el recordatorio en directo de las deudas en ese mismo instante a todos los usuarios en la nube vinculados al grupo.
-
-### 🔴 PENDIENTE: Vinculación de Eventos Compartidos por Cuenta (Próxima Sesión)
-
-**Objetivo:** Los eventos/grupos compartidos deben estar vinculados a la cuenta de usuario en Supabase, no al almacenamiento local.
-
-**Ciclo de uso esperado:**
-1. El usuario crea un evento → se guarda en Supabase vinculado a su `user_id` (tabla `shared_groups` + `group_members`).
-2. Copia el link (`billince.app/join/{group_id}`) o QR y lo comparte.
-3. El receptor pega el link o escanea el QR → se inserta en `group_members` → el evento aparece en su cuenta.
-4. Si el usuario cierra sesión y abre con otra cuenta, **NO ve los eventos de la cuenta anterior** a menos que se una vía enlace.
-
-**Cambios necesarios:**
-- [ ] Al crear un grupo en `shared_expenses_screen.dart`, hacer `upsert` en `shared_groups` con `created_by = user_id` y auto-insertar al creador en `group_members`.
-- [ ] Añadir `SupabaseRepository.createSharedGroup()` y `fetchUserGroups()` (SELECT grupos donde el usuario sea miembro vía JOIN con `group_members`).
-- [ ] En `main.dart`, al hacer merge de datos cloud, cargar los grupos del usuario desde Supabase y poblar `AppData.sharedGroups`.
-- [ ] Los gastos de cada grupo (`shared_expenses`) deben cargarse al entrar en el detalle del grupo.
-- [ ] Al cerrar sesión, limpiar `AppData.sharedGroups` para que la siguiente cuenta arranque limpia.
-- [ ] `joinSharedGroup()` ya existe; falta que tras unirse, se descarguen los datos del grupo y se añadan a `AppData.sharedGroups` localmente.
+### Optimización y Nuevas Features
+- **Gestión de Borrado en la Nube:** Estudiar la casuística del borrado de elementos en Supabase. ¿Si un elemento se borra en la app, debe aplicarse un borrado lógico o físico en la base de datos?
+- **Escaneo Avanzado:** Optimizar la lectura y precisión del escaneo de tickets mediante la cámara.
+- **Exportación e Importación:** Añadir soporte para leer y exportar datos a formatos `.xlsx` o `.csv`, facilitando la visualización de balances en plataformas como Google Drive.
+- **Ingeniería de Requisitos y Testing:** Crear diagramas de flujo y diagramas de casos de uso de la aplicación para tener claro todo el recorrido general y preparar las bases para testing automatizado.
+- **Exploración Continua:** Seguir analizando nuevas ideas y requerimientos de usuario para futuras actualizaciones de la app.
 
 ---
 

@@ -7,6 +7,7 @@ import '../models/checklist_item.dart';
 import '../data/app_data.dart';
 import '../data/local_database.dart';
 import '../services/ticket_scanner.dart';
+import '../utils/app_activity_logger.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -33,7 +34,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return _filteredExpenses.fold(0.0, (sum, item) => sum + item.amount);
   }
 
-  void _scanTicket() {
+  void _showAddOptions() {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -43,11 +44,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Escanear Factura/Ticket', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Añadir Gasto', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.blue),
-                title: const Text('Hacer una Foto'),
+                title: const Text('Hacer una Foto del Ticket'),
                 onTap: () {
                   Navigator.pop(context);
                   _processTicketLocal(ImageSource.camera);
@@ -55,10 +56,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.image, color: Colors.teal),
-                title: const Text('Subir desde Galería'),
+                title: const Text('Subir Ticket desde Galería'),
                 onTap: () {
                   Navigator.pop(context);
                   _processTicketLocal(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_note_rounded, color: Colors.orange),
+                title: const Text('Añadir Manualmente'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showExpenseForm();
                 },
               ),
             ],
@@ -179,9 +188,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Gestionar Categorías', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const Text('Editar Categorías', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 8),
-                  const Text('Añade o elimina módulos para organizar tus gastos.', style: TextStyle(color: Colors.grey), textAlign: TextAlign.center),
+                  const Text('Añade o elimina categorías para organizar tus gastos.', style: TextStyle(color: Colors.grey), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   
                   Row(
@@ -190,7 +199,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         child: TextField(
                           controller: newModuleController,
                           decoration: const InputDecoration(
-                            hintText: 'Nuevo módulo (ej. Regalos)', 
+                            hintText: 'Nueva categoría (ej. Regalos)', 
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0)
                           ),
@@ -243,7 +252,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                   });
                                   setSheetState((){});
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Módulo "$mod" eliminado. Gastos movidos a "General".')),
+                                    SnackBar(content: Text('Categoría "$mod" eliminada. Gastos movidos a "General".')),
                                   );
                                 },
                               ),
@@ -501,6 +510,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           AppData.expenses.insert(0, newExp);
                           LocalDatabase.insertExpense(newExp);
                           
+                          AppActivityLogger.logExpenseAdded(title, amount);
+                          
                           // If it came from a ticket and had items, generate the list
                           if (ticketItems != null && ticketItems.isNotEmpty) {
                             final newList = ShoppingList(
@@ -567,16 +578,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           onPressed: _pickDateRange,
           style: TextButton.styleFrom(padding: EdgeInsets.zero),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: TextButton.icon(
-              icon: const Icon(Icons.edit_note_rounded, size: 20),
-              label: const Text('Manual'),
-              onPressed: () => _showExpenseForm(),
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -624,7 +625,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 const Text('Filtro por Categoría:', style: TextStyle(fontWeight: FontWeight.bold)),
                 TextButton.icon(
                   icon: const Icon(Icons.settings, size: 16),
-                  label: const Text('Gestionar'),
+                  label: const Text('Editar Categorías'),
                   onPressed: _showManageModulesSheet,
                   style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(50, 30)),
                 ),
@@ -799,10 +800,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _scanTicket,
-        icon: const Icon(Icons.camera_alt),
-        label: const Text('Escanear', style: TextStyle(fontWeight: FontWeight.bold)),
-        tooltip: 'Escanear Ticket',
+        onPressed: _showAddOptions,
+        icon: const Icon(Icons.add),
+        label: const Text('AÑADIR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        tooltip: 'Añadir Gasto',
         elevation: 4,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

@@ -8,6 +8,7 @@ class SharedExpenseGroup {
   List<SharedExpense> expenses;
   List<SharedFile> files;
   String currency;
+  String? myMemberName;
 
   SharedExpenseGroup({
     required this.id,
@@ -16,5 +17,6 @@ class SharedExpenseGroup {
     required this.expenses,
     required this.files,
     this.currency = '\$',
+    this.myMemberName,
   });
 }
