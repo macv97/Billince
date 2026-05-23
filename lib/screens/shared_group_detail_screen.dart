@@ -241,7 +241,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                               ]
                             ],
                           ),
-                          trailing: IconButton(
+                          trailing: isMe ? const SizedBox.shrink() : IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                             onPressed: () {
                               if (widget.group.members.length <= 1) {

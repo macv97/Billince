@@ -5,6 +5,7 @@ import 'create_shared_checklist_screen.dart';
 import 'shared_checklist_detail_screen.dart';
 import '../data/supabase_repository.dart';
 import '../utils/app_activity_logger.dart';
+import 'qr_scanner_screen.dart';
 
 class SharedChecklistsTab extends StatefulWidget {
   const SharedChecklistsTab({super.key});
@@ -103,8 +104,14 @@ class _SharedChecklistsTabState extends State<SharedChecklistsTab> {
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usa tu cámara nativa para leer el QR y pega el enlace aquí.')));
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+                  );
+                  if (result != null && result is String) {
+                    linkController.text = result;
+                  }
                 },
               ),
               const SizedBox(height: 24),

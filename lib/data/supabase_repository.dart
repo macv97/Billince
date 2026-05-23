@@ -92,6 +92,16 @@ class SupabaseRepository {
     }
   }
 
+  static Future<void> leaveSharedGroup(String groupId) async {
+    final user = currentUser;
+    if (user == null) return;
+    try {
+      await client.from('group_members').update({'user_id': null}).eq('group_id', groupId).eq('user_id', user.id);
+    } catch (e) {
+      print("Error leaving shared group: $e");
+    }
+  }
+
   static Future<void> createSharedGroup(SharedExpenseGroup group) async {
     final user = currentUser;
     if (user == null) return;

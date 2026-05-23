@@ -7,6 +7,7 @@ import '../data/local_database.dart';
 import '../data/supabase_repository.dart';
 import 'shared_group_detail_screen.dart';
 import '../utils/app_activity_logger.dart';
+import 'qr_scanner_screen.dart';
 
 class SharedExpensesScreen extends StatefulWidget {
   const SharedExpensesScreen({super.key});
@@ -119,8 +120,14 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usa tu cámara nativa para leer el QR y pega el enlace aquí.')));
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+                  );
+                  if (result != null && result is String) {
+                    linkController.text = result;
+                  }
                 },
               ),
               const SizedBox(height: 24),
@@ -204,6 +211,7 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
               setState(() {
                 AppData.sharedGroups.remove(group);
               });
+              SupabaseRepository.leaveSharedGroup(group.id);
               Navigator.pop(context);
             },
             child: const Text('Eliminar', style: TextStyle(color: Colors.red)),

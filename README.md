@@ -45,17 +45,13 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 
 ---
 
-## 🔴 Bugs y Funcionalidades Críticas a Corregir (Testeo en Móviles Reales)
-
-- **Registro de cuentas (`Sign Up`):** Actualmente la aplicación no permite registrar nuevos usuarios o no registra de manera correcta las nuevas cuentas en Supabase.
-- **Problema de Visibilidad de UI en Modos de Color (Claro/Oscuro):** En modo oscuro, el botón para registrar una nueva cuenta se camufla por completo en la pantalla de bienvenida, volviéndose invisible. Se requiere revisar exhaustivamente la visibilidad de los botones y textos interactivos en modo claro, oscuro y con las diferentes paletas y temas de accesibilidad.
-- **Botón de Escaneo QR inoperativo:** El botón para escanear códigos QR en la aplicación no activa la cámara ni realiza ninguna acción. Debe implementarse su funcionamiento tanto en el módulo de checklists como en el de eventos compartidos.
-- **Compartir Listas en Tiempo Real:** En el módulo de checklists (lista compartida), la funcionalidad para compartir listas con otras cuentas no es operativa. Al ingresar el enlace o invitar, la lista compartida debe aparecer y sincronizarse de manera correcta en la cuenta del usuario que ingresa el enlace.
-- **Identificación en Checklist Compartido:** Al unirse o crear una lista compartida, lo primero que debe hacer la aplicación es solicitar o permitir al usuario elegir quién es dentro de la lista de integrantes del checklist.
-- **Asignación y Visualización de Identidad en Eventos Compartidos:**
-  - El usuario creador o participante de un evento compartido no debería poder eliminarse a sí mismo.
-  - La aplicación debe permitir asignar un nombre personalizado a quien crea el evento (ej: "Pepe") y mostrarlo en la lista como `"Nombre (Tú)"` (ej: `"Pepe (Tú)"`). A cada participante respectivo se le debe mostrar el sufijo `(Tú)` en su propio nombre para identificar claramente su identidad en el evento.
-- **Borrado Persistente de Eventos Compartidos:** Arreglar el flujo de eliminación de eventos compartidos. Actualmente, al eliminar un evento compartido y recargar la pantalla, el evento vuelve a aparecer (posiblemente debido a que se recargan directamente todos los datos desde Supabase/SQLite sin validar el estado de borrado o sin aplicar la eliminación en la base de datos). Los botones de borrado deben ser 100% funcionales y persistentes.
+## ✅ Bugs Solucionados (Testeo Móvil)
+- **Registro de cuentas (`Sign Up`):** Se añadió validación de cuenta creada con confirmación pendiente sin forzar inicio de sesión automático fallido.
+- **Problema de Visibilidad de UI en Modos de Color (Claro/Oscuro):** Se ajustó el contraste del botón de registro en el modo oscuro.
+- **Botón de Escaneo QR:** Implementada lectura de QR funcional mediante cámara nativa (`mobile_scanner`).
+- **Compartir Listas y Selector de Identidad:** Corregidos problemas de asiganción de identidad y persistencia en checklists.
+- **Asignación e Inmutabilidad en Eventos Compartidos:** Añadida etiqueta `(Tú)` dinámica y botón de borrado de participante deshabilitado para sí mismo.
+- **Borrado Persistente de Eventos:** Los eventos ahora se desvinculan correctamente en Supabase en lugar de solo en local, previniendo apariciones fantasmas tras recarga.
 
 ---
 

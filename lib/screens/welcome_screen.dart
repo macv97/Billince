@@ -266,6 +266,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   await SupabaseRepository.signIn(email, password);
                                 } else {
                                   await SupabaseRepository.signUp(email, password);
+                                  if (SupabaseRepository.currentUser == null) {
+                                    setModalState(() {
+                                      errorMessage = 'Cuenta creada. Revisa tu correo electrónico para verificarla antes de iniciar sesión.';
+                                      _isLoadingAuth = false;
+                                    });
+                                    return;
+                                  }
                                 }
                                 if (mounted) {
                                   // Recargar datos de la nube tras login
@@ -321,7 +328,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             ),
                             child: Text(
                               isLogin ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión', 
-                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 15)
+                              style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.amber : primaryColor, fontWeight: FontWeight.bold, fontSize: 15)
                             ),
                           ),
                         ],

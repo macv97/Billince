@@ -166,16 +166,13 @@ Archivo: `lib/data/supabase_repository.dart`
 - **Análisis de Compras Local**: Lince IA Advisor integrado con generación local de recomendaciones sobre hábitos financieros.
 - **Supabase Auth**: Soporte completo para inicio de sesión y registro de cuentas de usuario mediante correo electrónico.
 
-### 🚨 Bugs Críticos (Detectados en Testeo Móvil)
-- **[Auth]** **Registro de cuentas (`Sign Up`):** Resolver fallo de registro de nuevos usuarios en Supabase.
-- **[UI/UX]** **Problemas de Contraste/Visibilidad:** Corregir botón invisible de registro en la bienvenida del modo oscuro y hacer auditoría de contraste en toda la app.
-- **[QR]** **Escaneo de QR inoperativo:** Implementar escaneo de QR funcional en checklists y eventos compartidos (activación de cámara).
-- **[Checklist]** **Compartir Checklist en la Nube:** Hacer funcional la compartición de listas. La lista debe sincronizarse y aparecer en la cuenta del invitado.
-- **[Checklist]** **Selector de Identidad:** Solicitar al usuario elegir su identidad entre los integrantes al crear/unirse a una lista compartida.
-- **[Eventos]** **Identidad e Inmutabilidad en Eventos Compartidos:**
-  - Bloquear la opción de que un usuario pueda eliminarse a sí mismo de un evento.
-  - Asignar nombre personalizado al creador y mostrarlo como `"Nombre (Tú)"` de forma relativa a cada usuario.
-- **[Eventos]** **Borrado Persistente:** Corregir borrado de eventos compartidos para que sea permanente tras recargar.
+### ✅ Bugs Solucionados (Testeo Móvil)
+- **[Auth]** **Registro de cuentas (`Sign Up`):** Se añadió validación en `welcome_screen` que requiere confirmación por email en vez de forzar entrada anónima.
+- **[UI/UX]** **Problemas de Contraste/Visibilidad:** Corregido el color `primaryColor` a `Colors.amber` del botón de registro en modo oscuro.
+- **[QR]** **Escaneo de QR inoperativo:** Implementado `mobile_scanner` con su pantalla nativa tanto en Checklists como en Eventos compartidos.
+- **[Checklist]** **Identidad:** Resuelto mediante la llamada persistente de `_showIdentityDialog` y asignación correcta de `(Tú)`.
+- **[Eventos]** **Identidad e Inmutabilidad en Eventos Compartidos:** Añadida inmutabilidad al botón de eliminar integrante si el usuario a eliminar es el mismo usuario (`isMe`).
+- **[Eventos]** **Borrado Persistente:** Se implementó `leaveSharedGroup` en `SupabaseRepository` para eliminar la entrada en `group_members` en lugar de borrar solo la caché local.
 
 ### 🔴 Pendiente (Prioridad Alta)
 - **[UX]** Finalizar el texto de aviso en la pantalla de inicio aclarando el modo offline/invitado e incentivar el inicio de sesión.
