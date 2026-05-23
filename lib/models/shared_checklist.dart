@@ -34,7 +34,7 @@ class SharedChecklistItem {
 
 class SharedChecklist {
   final String id;
-  final String name;
+  String name;
   final String currency; // Not strictly used, but good to have parity
   final List<String> members;
   String? myMemberName;
