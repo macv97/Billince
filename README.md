@@ -51,10 +51,11 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 - **Botón de Escaneo QR:** Implementada lectura de QR funcional mediante cámara nativa (`mobile_scanner`).
 - **Compartir Listas y Selector de Identidad:** Corregidos problemas de asiganción de identidad y persistencia en checklists.
 - **Asignación e Inmutabilidad en Eventos Compartidos:** Añadida etiqueta `(Tú)` dinámica y botón de borrado de participante deshabilitado para sí mismo.
-- **Borrado Persistente de Eventos:** Los eventos ahora se desvinculan correctamente en Supabase en lugar de solo en local, previniendo apariciones fantasmas tras recarga.
+- **Borrado Persistente de Eventos y Listas:** Al eliminar un evento o lista compartida (Swipe to Delete), ahora se desvincula el usuario realizando un borrado físico de su registro en la tabla de miembros en Supabase. Esto soluciona por completo el bug de apariciones fantasmas tras hacer "Pull to Refresh".
+- **Refresco Individual de Eventos:** Añadida la funcionalidad *Pull-to-Refresh* (deslizar hacia abajo) dentro de las pestañas internas de cada evento compartido (Gastos, Saldos, Archivos) para poder recargar el contenido específico sin tener que salir a la pantalla principal.
 - **Renombrado de Módulos UI:** "Facturación" a "Gastos", "Checklist" a "Listas" y "Grupos" a "Eventos", simplificando descripciones en el Menú Principal.
 - **Armonización de Borrado UX:** Se implementó `Swipe to Delete` (deslizar para borrar) tanto en Eventos como Listas Compartidas, eliminando el antiguo `onLongPress` para que concuerde con las Listas Personales.
-- **Edición en Listas Compartidas:** Implementada la rueda de ajustes en Listas Compartidas para añadir/eliminar miembros y editar el título.
+- **Edición en Listas Compartidas:** Implementada la rueda de ajustes en Listas Compartidas para añadir/eliminar miembros y editar el título de forma dinámica.
 - **Optimización de Snackbars:** Se implementó `clearSnackBars()` globalmente antes de mostrar mensajes (`showSnackBar`), previniendo apilamientos infinitos de alertas por clicks rápidos.
 
 ---
