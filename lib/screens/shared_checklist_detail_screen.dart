@@ -377,6 +377,107 @@ class _SharedChecklistDetailScreenState extends State<SharedChecklistDetailScree
     return '${date.day}/${date.month} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
+  void _showSettingsModal() {
+    final titleController = TextEditingController(text: _checklist.name);
+    final memberController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24, right: 24, top: 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Ajustes de la Lista', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Título de la lista', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: memberController,
+                            decoration: const InputDecoration(labelText: 'Nuevo integrante', isDense: true),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle, color: Colors.blue),
+                          onPressed: () {
+                            if (memberController.text.trim().isNotEmpty) {
+                              final newMember = memberController.text.trim();
+                              setModalState(() {
+                                _checklist.members.add(newMember);
+                              });
+                              setState((){});
+                              SupabaseRepository.addSharedChecklistMember(_checklist.id, newMember);
+                              memberController.clear();
+                            }
+                          },
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Integrantes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    ..._checklist.members.map((m) {
+                      final isMe = m == (_checklist.myMemberName ?? 'Tú');
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(child: Text(m.isNotEmpty ? m[0].toUpperCase() : '?')),
+                        title: Text(m + (isMe ? ' (Tú)' : '')),
+                        trailing: isMe ? null : IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            setModalState(() {
+                              _checklist.members.remove(m);
+                            });
+                            setState((){});
+                            SupabaseRepository.removeSharedChecklistMemberByGuestName(_checklist.id, m);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                        onPressed: () {
+                          if (titleController.text.trim().isNotEmpty && titleController.text.trim() != _checklist.name) {
+                            setState(() {
+                              _checklist.name = titleController.text.trim();
+                            });
+                            SupabaseRepository.updateSharedChecklistTitle(_checklist.id, _checklist.name);
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Guardar Cambios'),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -397,6 +498,7 @@ class _SharedChecklistDetailScreenState extends State<SharedChecklistDetailScree
       appBar: AppBar(
         title: Text(_checklist.name),
         actions: [
+          IconButton(icon: const Icon(Icons.settings), onPressed: _showSettingsModal),
           IconButton(icon: const Icon(Icons.history), onPressed: _showAuditLogs),
           IconButton(icon: const Icon(Icons.share), onPressed: _showShareModal),
         ],

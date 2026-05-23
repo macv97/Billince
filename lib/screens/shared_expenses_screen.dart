@@ -23,14 +23,8 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
       try {
         final cloudGroups = await SupabaseRepository.fetchUserGroups();
         setState(() {
-          // Mantener los grupos locales que no estén en la nube
-          final localOnly = AppData.sharedGroups.where(
-            (local) => !cloudGroups.any((cloud) => cloud.id == local.id)
-          ).toList();
-          AppData.sharedGroups
-            ..clear()
-            ..addAll(cloudGroups)
-            ..addAll(localOnly);
+          AppData.sharedGroups.clear();
+          AppData.sharedGroups.addAll(cloudGroups);
         });
       } catch (_) {}
     }
@@ -198,28 +192,6 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
     );
   }
 
-  void _deleteGroup(SharedExpenseGroup group) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Grupo'),
-        content: Text('¿Seguro que quieres eliminar "${group.title}" y todos sus gastos?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                AppData.sharedGroups.remove(group);
-              });
-              SupabaseRepository.leaveSharedGroup(group.id);
-              Navigator.pop(context);
-            },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showIdentityDialog(SharedExpenseGroup group) {
     if (group.members.isEmpty) return;
@@ -280,7 +252,7 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Traspasar a Facturación'),
+              title: const Text('Traspasar a Gastos'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +293,7 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Se ha traspasado ${myShare.toStringAsFixed(2)}${group.currency} a Facturación.'),
+                        content: Text('Se ha traspasado ${myShare.toStringAsFixed(2)}${group.currency} a Gastos.'),
                         backgroundColor: const Color(0xFF10B981),
                       ));
                     }
@@ -371,53 +343,78 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
               itemCount: AppData.sharedGroups.length,
               itemBuilder: (context, index) {
                 final group = AppData.sharedGroups[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 2,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onLongPress: () => _transferToBilling(group),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SharedGroupDetailScreen(group: group)),
-                      ).then((_) {
-                        setState(() {});
-                      });
+                return Dismissible(
+                    key: Key(group.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      color: Colors.red,
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Eliminar Evento'),
+                          content: Text('¿Seguro que quieres desvincularte de "${group.title}"?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Borrar')),
+                          ],
+                        ),
+                      );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(_getIconForGroup(group.title), color: isDark ? Colors.amber : const Color(0xFFF59E0B)),
+                    onDismissed: (direction) {
+                      setState(() {
+                        AppData.sharedGroups.remove(group);
+                      });
+                      SupabaseRepository.leaveSharedGroup(group.id);
+                    },
+                    child: Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onLongPress: () => _transferToBilling(group),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => SharedGroupDetailScreen(group: group)),
+                          ).then((_) {
+                            setState(() {});
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFFEF3C7),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(_getIconForGroup(group.title), color: isDark ? Colors.amber : const Color(0xFFF59E0B)),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(group.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 4),
+                                    Text('${group.members.length} integrantes | ${group.expenses.length} gastos', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(group.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 4),
-                                Text('${group.members.length} integrantes | ${group.expenses.length} gastos', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                            onPressed: () => _deleteGroup(group),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                );
+                  );
               },
             ),
       ),

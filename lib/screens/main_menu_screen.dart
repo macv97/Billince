@@ -92,24 +92,24 @@ class MainMenuScreen extends StatelessWidget {
                 children: [
                   _buildGridCard(
                     context,
-                    title: 'Facturación',
-                    subtitle: 'Escaneo Inteligente',
+                    title: 'Gastos',
+                    subtitle: '',
                     icon: Icons.receipt_long_rounded,
                     color: const Color(0xFF3B82F6), // Blue
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen())),
                   ),
                   _buildGridCard(
                     context,
-                    title: 'Checklists',
-                    subtitle: 'Listas de Compra',
+                    title: 'Listas',
+                    subtitle: '',
                     icon: Icons.shopping_cart_rounded,
                     color: const Color(0xFF0D9488), // Teal
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChecklistScreen())),
                   ),
                   _buildGridCard(
                     context,
-                    title: 'Grupos',
-                    subtitle: 'Gastos Compartidos',
+                    title: 'Eventos',
+                    subtitle: '',
                     icon: Icons.group_rounded,
                     color: const Color(0xFFF59E0B), // Amber
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharedExpensesScreen())),
@@ -117,7 +117,7 @@ class MainMenuScreen extends StatelessWidget {
                   _buildGridCard(
                     context,
                     title: 'Analíticas',
-                    subtitle: 'Insights',
+                    subtitle: '',
                     icon: Icons.insights_rounded,
                     color: const Color(0xFF8B5CF6), // Purple
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SummaryScreen())),
@@ -216,8 +216,10 @@ class MainMenuScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600)),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600)),
+                    ]
                   ],
                 ),
               ],

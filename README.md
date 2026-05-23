@@ -52,6 +52,10 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 - **Compartir Listas y Selector de Identidad:** Corregidos problemas de asiganción de identidad y persistencia en checklists.
 - **Asignación e Inmutabilidad en Eventos Compartidos:** Añadida etiqueta `(Tú)` dinámica y botón de borrado de participante deshabilitado para sí mismo.
 - **Borrado Persistente de Eventos:** Los eventos ahora se desvinculan correctamente en Supabase en lugar de solo en local, previniendo apariciones fantasmas tras recarga.
+- **Renombrado de Módulos UI:** "Facturación" a "Gastos", "Checklist" a "Listas" y "Grupos" a "Eventos", simplificando descripciones en el Menú Principal.
+- **Armonización de Borrado UX:** Se implementó `Swipe to Delete` (deslizar para borrar) tanto en Eventos como Listas Compartidas, eliminando el antiguo `onLongPress` para que concuerde con las Listas Personales.
+- **Edición en Listas Compartidas:** Implementada la rueda de ajustes en Listas Compartidas para añadir/eliminar miembros y editar el título.
+- **Optimización de Snackbars:** Se implementó `clearSnackBars()` globalmente antes de mostrar mensajes (`showSnackBar`), previniendo apilamientos infinitos de alertas por clicks rápidos.
 
 ---
 

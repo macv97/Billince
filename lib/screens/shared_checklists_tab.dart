@@ -156,7 +156,7 @@ class _SharedChecklistsTabState extends State<SharedChecklistsTab> {
                     }
                     _loadData();
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(SnackBar(content: Text('Error: $e')));
                   }
                 },
                 child: const Text('Unirse', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -200,30 +200,7 @@ class _SharedChecklistsTabState extends State<SharedChecklistsTab> {
     );
   }
 
-  void _deleteList(SharedChecklist list) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Lista Compartida'),
-        content: Text('¿Seguro que quieres eliminar "${list.name}" de tu vista? (Solo se eliminará de tu cuenta).'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                AppData.sharedChecklists.remove(list);
-              });
-              // This removes from local view. If user logs in again on another device it will reload from DB, 
-              // unless we remove the link from shared_checklist_members.
-              SupabaseRepository.removeUserFromChecklist(list.id);
-              Navigator.pop(context);
-            },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -259,24 +236,52 @@ class _SharedChecklistsTabState extends State<SharedChecklistsTab> {
                 itemCount: AppData.sharedChecklists.length,
                 itemBuilder: (context, index) {
                   final list = AppData.sharedChecklists[index];
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      leading: CircleAvatar(
-                        backgroundColor: primaryColor.withOpacity(0.1),
-                        child: Icon(Icons.list_alt, color: primaryColor),
+                  return Dismissible(
+                    key: Key(list.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      color: Colors.red,
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('¿Borrar lista?'),
+                          content: const Text('¿Estás seguro que deseas eliminar esta lista compartida?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Borrar')),
+                          ],
+                        ),
+                      );
+                    },
+                    onDismissed: (direction) {
+                      setState(() {
+                        AppData.sharedChecklists.remove(list);
+                      });
+                      SupabaseRepository.removeUserFromChecklist(list.id);
+                    },
+                    child: Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: CircleAvatar(
+                          backgroundColor: primaryColor.withOpacity(0.1),
+                          child: Icon(Icons.list_alt, color: primaryColor),
+                        ),
+                        title: Text(list.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('${list.members.length} participantes'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => SharedChecklistDetailScreen(checklist: list)))
+                              .then((_) => _loadData());
+                        },
                       ),
-                      title: Text(list.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('${list.members.length} participantes'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => SharedChecklistDetailScreen(checklist: list)))
-                            .then((_) => _loadData());
-                      },
-                      onLongPress: () => _deleteList(list),
                     ),
                   );
                 },

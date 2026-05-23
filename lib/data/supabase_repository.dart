@@ -425,6 +425,34 @@ class SupabaseRepository {
     }
   }
 
+  static Future<void> updateSharedChecklistTitle(String listId, String newTitle) async {
+    try {
+      await client.from('shared_checklists').update({'name': newTitle}).eq('id', listId);
+    } catch (e) {
+      print("Error updating checklist title: $e");
+    }
+  }
+
+  static Future<void> addSharedChecklistMember(String listId, String memberName) async {
+    try {
+      await client.from('shared_checklist_members').insert({
+        'list_id': listId,
+        'guest_name': memberName,
+        'user_id': null,
+      });
+    } catch (e) {
+      print("Error adding checklist member: $e");
+    }
+  }
+
+  static Future<void> removeSharedChecklistMemberByGuestName(String listId, String memberName) async {
+    try {
+      await client.from('shared_checklist_members').delete().eq('list_id', listId).eq('guest_name', memberName);
+    } catch (e) {
+      print("Error removing checklist member: $e");
+    }
+  }
+
   static Future<List<SharedChecklist>> fetchUserSharedChecklists() async {
     final user = currentUser;
     if (user == null) return [];
