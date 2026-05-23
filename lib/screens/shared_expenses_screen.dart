@@ -312,6 +312,147 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
     );
   }
 
+  void _showEventSettingsSheet(SharedExpenseGroup group) {
+    final titleController = TextEditingController(text: group.title);
+    final memberController = TextEditingController();
+    String selectedCurrency = group.currency;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24, right: 24, top: 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Ajustes del Evento', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _transferToBilling(group);
+                          },
+                          icon: const Icon(Icons.account_balance_wallet, size: 18),
+                          label: const Text('Traspasar Gastos'),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Título del evento', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Moneda del evento:', style: TextStyle(fontSize: 16)),
+                        DropdownButton<String>(
+                          value: selectedCurrency,
+                          items: const [
+                            DropdownMenuItem(value: '€', child: Text('Euro (€)')),
+                            DropdownMenuItem(value: '\$', child: Text('Dólar (\$)')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setModalState(() => selectedCurrency = val);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: memberController,
+                            decoration: const InputDecoration(labelText: 'Nuevo integrante', isDense: true),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle, color: Colors.blue),
+                          onPressed: () async {
+                            if (memberController.text.trim().isNotEmpty) {
+                              final newMember = memberController.text.trim();
+                              setModalState(() {
+                                group.members.add(newMember);
+                              });
+                              setState((){});
+                              await SupabaseRepository.client.from('group_members').insert({
+                                'group_id': group.id,
+                                'guest_name': newMember,
+                                'user_id': null,
+                              });
+                              memberController.clear();
+                            }
+                          },
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Integrantes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    ...group.members.map((m) {
+                      final isMe = m == (group.myMemberName ?? 'Tú');
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(child: Text(m.isNotEmpty ? m[0].toUpperCase() : '?')),
+                        title: Text(m + (isMe ? ' (Tú)' : '')),
+                        trailing: isMe ? null : IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            setModalState(() {
+                              group.members.remove(m);
+                            });
+                            setState((){});
+                            await SupabaseRepository.client.from('group_members').delete().eq('group_id', group.id).eq('guest_name', m);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                        onPressed: () async {
+                          final newTitle = titleController.text.trim();
+                          if (newTitle.isNotEmpty && newTitle != group.title) {
+                            setState(() => group.title = newTitle);
+                            await SupabaseRepository.updateSharedGroupTitle(group.id, newTitle);
+                          }
+                          if (selectedCurrency != group.currency) {
+                            setState(() => group.currency = selectedCurrency);
+                            await SupabaseRepository.updateSharedGroupCurrency(group.id, selectedCurrency);
+                          }
+                          if (mounted) Navigator.pop(context);
+                        },
+                        child: const Text('Guardar Cambios'),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -377,7 +518,6 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        onLongPress: () => _transferToBilling(group),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -408,6 +548,10 @@ class _SharedExpensesScreenState extends State<SharedExpensesScreen> {
                                     Text('${group.members.length} integrantes | ${group.expenses.length} gastos', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                                   ],
                                 ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.settings, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                onPressed: () => _showEventSettingsSheet(group),
                               ),
                             ],
                           ),

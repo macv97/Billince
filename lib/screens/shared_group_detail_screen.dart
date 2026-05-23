@@ -198,7 +198,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                       ElevatedButton.icon(
                         icon: const Icon(Icons.person_add),
                         label: const Text('Añadir'),
-                        onPressed: () {
+                        onPressed: () async {
                           final name = controller.text.trim();
                           if (name.isNotEmpty && !widget.group.members.contains(name)) {
                             setState(() {
@@ -206,6 +206,11 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                             });
                             setSheetState((){});
                             controller.clear();
+                            await SupabaseRepository.client.from('group_members').insert({
+                              'group_id': widget.group.id,
+                              'guest_name': name,
+                              'user_id': null,
+                            });
                           }
                         },
                       )
@@ -243,7 +248,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                           ),
                           trailing: isMe ? const SizedBox.shrink() : IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                            onPressed: () {
+                            onPressed: () async {
                               if (widget.group.members.length <= 1) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Debe haber al menos una persona en el grupo.')),
@@ -254,6 +259,7 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                                 widget.group.members.remove(member);
                               });
                               setSheetState((){});
+                              await SupabaseRepository.client.from('group_members').delete().eq('group_id', widget.group.id).eq('guest_name', member);
                             },
                           ),
                         );
@@ -300,13 +306,14 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: () {
+                onPressed: () async {
                   final text = controller.text.trim();
                   if (text.isNotEmpty) {
                     setState(() {
                       widget.group.title = text;
                     });
                     Navigator.pop(context);
+                    await SupabaseRepository.updateSharedGroupTitle(widget.group.id, text);
                   }
                 },
                 child: const Text('Guardar'),

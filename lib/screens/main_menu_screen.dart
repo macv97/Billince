@@ -40,6 +40,10 @@ class MainMenuScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.primary),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => _showSettingsDialog(context),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: InkWell(
@@ -227,6 +231,132 @@ class MainMenuScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCenteredSetting({required IconData icon, required Color color, required String title, required Widget child}) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+
+  void _showSettingsDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Consumer<SettingsProvider>(
+          builder: (context, settings, child) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  _buildCenteredSetting(
+                    icon: Icons.language,
+                    color: Colors.blueGrey,
+                    title: 'Idioma',
+                    child: DropdownButton<String>(
+                      value: settings.language,
+                      underline: const SizedBox(),
+                      alignment: Alignment.center,
+                      items: const [
+                        DropdownMenuItem(value: 'es', child: Text('Español')),
+                        DropdownMenuItem(value: 'en', child: Text('English')),
+                      ],
+                      onChanged: (v) { if (v != null) settings.setLanguage(v); },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.dark_mode,
+                    color: Colors.indigo,
+                    title: 'Tema Visual',
+                    child: DropdownButton<ThemeMode>(
+                      value: settings.themeMode,
+                      underline: const SizedBox(),
+                      alignment: Alignment.center,
+                      items: const [
+                        DropdownMenuItem(value: ThemeMode.system, child: Text('Automático')),
+                        DropdownMenuItem(value: ThemeMode.light, child: Text('Claro')),
+                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
+                      ],
+                      onChanged: (v) { if (v != null) settings.setThemeMode(v); },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.color_lens,
+                    color: Colors.orange,
+                    title: 'Color Principal',
+                    child: DropdownButton<int>(
+                      value: settings.interfaceColor.value,
+                      underline: const SizedBox(),
+                      alignment: Alignment.center,
+                      items: const [
+                        DropdownMenuItem(value: 0xFF0F172A, child: Text('Midnight Blue')),
+                        DropdownMenuItem(value: 0xFF4B0082, child: Text('Indigo')),
+                        DropdownMenuItem(value: 0xFF800000, child: Text('Maroon')),
+                        DropdownMenuItem(value: 0xFF2F4F4F, child: Text('Slate Gray')),
+                      ],
+                      onChanged: (v) { if (v != null) settings.setInterfaceColor(Color(v)); },
+                    ),
+                  ),
+                  const Divider(height: 32),
+                  const Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal), textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.visibility,
+                    color: Colors.teal,
+                    title: 'Modo Daltonismo',
+                    child: DropdownButton<ColorBlindnessMode>(
+                      value: settings.colorBlindnessMode,
+                      underline: const SizedBox(),
+                      alignment: Alignment.center,
+                      items: const [
+                        DropdownMenuItem(value: ColorBlindnessMode.none, child: Text('Desactivado')),
+                        DropdownMenuItem(value: ColorBlindnessMode.protanopia, child: Text('Protanopia')),
+                        DropdownMenuItem(value: ColorBlindnessMode.deuteranopia, child: Text('Deuteranopia')),
+                        DropdownMenuItem(value: ColorBlindnessMode.tritanopia, child: Text('Tritanopia')),
+                      ],
+                      onChanged: (v) { if (v != null) settings.setColorBlindnessMode(v); },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.text_increase,
+                    color: Colors.teal,
+                    title: 'Tamaño de Texto',
+                    child: Slider(
+                      value: settings.textScaleFactor,
+                      min: 1.0,
+                      max: 1.5,
+                      divisions: 5,
+                      label: '${settings.textScaleFactor}',
+                      onChanged: (v) { settings.setTextScaleFactor(v); },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          }
+        );
+      }
     );
   }
 

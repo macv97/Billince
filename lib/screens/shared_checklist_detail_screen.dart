@@ -455,12 +455,12 @@ class _SharedChecklistDetailScreenState extends State<SharedChecklistDetailScree
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                        onPressed: () {
+                        onPressed: () async {
                           if (titleController.text.trim().isNotEmpty && titleController.text.trim() != _checklist.name) {
                             setState(() {
                               _checklist.name = titleController.text.trim();
                             });
-                            SupabaseRepository.updateSharedChecklistTitle(_checklist.id, _checklist.name);
+                            await SupabaseRepository.updateSharedChecklistTitle(_checklist.id, _checklist.name);
                           }
                           Navigator.pop(context);
                         },

@@ -21,7 +21,11 @@ class SupabaseRepository {
   }
 
   static Future<AuthResponse> signUp(String email, String password) async {
-    return await client.auth.signUp(email: email, password: password);
+    return await client.auth.signUp(
+      email: email, 
+      password: password,
+      emailRedirectTo: 'https://billince.app',
+    );
   }
 
   static Future<void> signOut() async {
@@ -126,6 +130,22 @@ class SupabaseRepository {
       rethrow;
     } catch (e) {
       print("Error creating shared group: $e");
+    }
+  }
+
+  static Future<void> updateSharedGroupTitle(String groupId, String newTitle) async {
+    try {
+      await client.from('shared_groups').update({'name': newTitle}).eq('id', groupId);
+    } catch (e) {
+      print("Error updating group title: $e");
+    }
+  }
+
+  static Future<void> updateSharedGroupCurrency(String groupId, String newCurrency) async {
+    try {
+      await client.from('shared_groups').update({'currency': newCurrency}).eq('id', groupId);
+    } catch (e) {
+      print("Error updating group currency: $e");
     }
   }
 

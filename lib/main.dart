@@ -218,7 +218,7 @@ class _BillinceAppState extends State<BillinceApp> {
           primary: settings.interfaceColor,
           secondary: const Color(0xFF2563EB),
           tertiary: const Color(0xFF0D9488),
-          surface: const Color(0xFF1E293B),
+          surface: const Color(0xFF0F172A),
           brightness: Brightness.dark,
         ),
         useMaterial3: true,

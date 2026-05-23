@@ -57,6 +57,11 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 - **Armonización de Borrado UX:** Se implementó `Swipe to Delete` (deslizar para borrar) tanto en Eventos como Listas Compartidas, eliminando el antiguo `onLongPress` para que concuerde con las Listas Personales.
 - **Edición en Listas Compartidas:** Implementada la rueda de ajustes en Listas Compartidas para añadir/eliminar miembros y editar el título de forma dinámica.
 - **Optimización de Snackbars:** Se implementó `clearSnackBars()` globalmente antes de mostrar mensajes (`showSnackBar`), previniendo apilamientos infinitos de alertas por clicks rápidos.
+- **Persistencia de Títulos en Listas Compartidas:** Añadida espera asíncrona (`await`) para garantizar que los cambios de nombre en las listas se guarden en Supabase antes de refrescar la UI.
+- **Mensaje de Éxito en Registro:** Se cambió el contenedor de error rojo por uno verde de éxito al crear la cuenta.
+- **Redirección de Confirmación de Correo:** Se solucionó el error de redirección a `localhost` configurando explícitamente el parámetro `emailRedirectTo: 'https://billince.app'` en la autenticación de Supabase.
+- **Rueda de Ajustes en Eventos:** Se eliminó la acción de dejar pulsado y se añadió un botón de ajustes en cada evento para gestionar nombre, moneda y participantes, asegurando que los cambios se sincronicen en la nube.
+- **Ajustes en Menú Principal y Tema:** Se añadió el icono de ajustes de accesibilidad en el menú principal y se corrigió el color de fondo del Modo Oscuro a Midnight Blue (`#0F172A`).
 
 ---
 

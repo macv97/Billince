@@ -131,6 +131,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final passwordController = TextEditingController();
     bool isLogin = true;
     String? errorMessage;
+    String? successMessage;
     
     showModalBottomSheet(
       context: context,
@@ -189,6 +190,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             const Icon(Icons.error_outline_rounded, color: Colors.redAccent),
                             const SizedBox(width: 12),
                             Expanded(child: Text(errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.bold))),
+                          ],
+                        ),
+                      ),
+                    if (successMessage != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1), 
+                          border: Border.all(color: Colors.green.withOpacity(0.3)), 
+                          borderRadius: BorderRadius.circular(16)
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline_rounded, color: Colors.green),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(successMessage!, style: const TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.bold))),
                           ],
                         ),
                       ),
@@ -259,6 +278,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               setModalState(() {
                                 _isLoadingAuth = true;
                                 errorMessage = null;
+                                successMessage = null;
                               });
                               
                               try {
@@ -268,7 +288,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   await SupabaseRepository.signUp(email, password);
                                   if (SupabaseRepository.currentUser == null) {
                                     setModalState(() {
-                                      errorMessage = 'Cuenta creada. Revisa tu correo electrónico para verificarla antes de iniciar sesión.';
+                                      successMessage = 'Cuenta creada con éxito. Revisa tu correo electrónico para verificarla.';
                                       _isLoadingAuth = false;
                                     });
                                     return;
@@ -320,6 +340,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               setModalState(() {
                                 isLogin = !isLogin;
                                 errorMessage = null;
+                                successMessage = null;
                               });
                             },
                             style: TextButton.styleFrom(
