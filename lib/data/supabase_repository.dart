@@ -96,7 +96,7 @@ class SupabaseRepository {
     final user = currentUser;
     if (user == null) return;
     try {
-      await client.from('group_members').update({'user_id': null}).eq('group_id', groupId).eq('user_id', user.id);
+      await client.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
     } catch (e) {
       print("Error leaving shared group: $e");
     }
@@ -419,7 +419,7 @@ class SupabaseRepository {
     final user = currentUser;
     if (user == null) return;
     try {
-      await client.from('shared_checklist_members').update({'user_id': null}).eq('list_id', listId).eq('user_id', user.id);
+      await client.from('shared_checklist_members').delete().eq('list_id', listId).eq('user_id', user.id);
     } catch (e) {
       print("Error removing user from checklist: $e");
     }

@@ -828,187 +828,209 @@ class _SharedGroupDetailScreenState extends State<SharedGroupDetailScreen> with 
         controller: _tabController,
         children: [
           // PESTAÑA 1: GASTOS
-          widget.group.expenses.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.receipt_long, size: 80, color: Colors.grey.shade300),
-                      const SizedBox(height: 16),
-                      const Text('Aún no hay gastos en este grupo.', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80, top: 16),
-                  itemCount: widget.group.expenses.length,
-                  itemBuilder: (context, index) {
-                    final exp = widget.group.expenses[index];
-                    return Dismissible(
-                      key: Key(exp.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(12)),
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
+          RefreshIndicator(
+            onRefresh: _loadExpenses,
+            child: widget.group.expenses.isEmpty
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.receipt_long, size: 80, color: Colors.grey.shade300),
+                          const SizedBox(height: 16),
+                          const Text('Aún no hay gastos en este grupo.', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        ],
                       ),
-                      onDismissed: (_) {
-                        _deleteExpense(exp);
-                      },
-                      child: GestureDetector(
-                        onLongPress: () => _showExpenseActionDialog(exp),
-                        child: Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 1,
-                          child: ListTile(
-                            onTap: () => _showExpenseActionDialog(exp),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            title: Text(exp.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text('Pagó: ${exp.payer}', style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w500)),
-                                const SizedBox(height: 2),
-                                Text('Para: ${exp.participants.join(", ")}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('$c${exp.amount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 80, top: 16),
+                    itemCount: widget.group.expenses.length,
+                    itemBuilder: (context, index) {
+                      final exp = widget.group.expenses[index];
+                      return Dismissible(
+                        key: Key(exp.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(12)),
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                      ),
-                    );
-                  },
-                ),
-
-          // PESTAÑA 2: SALDOS Y QUIÉN DEBE A QUIÉN
-          ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const Text('Resumen de Saldos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const Text('Positivo: Le deben dinero | Negativo: Debe dinero', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              const SizedBox(height: 16),
-              ...widget.group.members.map((m) {
-                final isMe = m == widget.group.myMemberName || (widget.group.myMemberName == null && m == 'Tú');
-                final bal = balances[m] ?? 0.0;
-                final isPositive = bal > 0.01;
-                final isNegative = bal < -0.01;
-                final color = isPositive ? Colors.green : (isNegative ? Colors.red : Colors.grey);
-                return ListTile(
-                  leading: CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Text(m.substring(0, 1), style: TextStyle(color: color, fontWeight: FontWeight.bold))),
-                  title: Row(
-                    children: [
-                      Text(m, style: TextStyle(fontWeight: isMe ? FontWeight.bold : FontWeight.w500)),
-                      if (isMe) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(4)),
-                          child: const Text('Tú', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                        )
-                      ]
-                    ],
-                  ),
-                  trailing: Text(
-                    '${bal > 0 ? '+' : ''}$c${bal.abs().toStringAsFixed(2)}',
-                    style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                );
-              }),
-              
-              const SizedBox(height: 30),
-              const Divider(),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('¿Cómo liquidar?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  IconButton(
-                    icon: const Icon(Icons.help_outline, color: Color(0xFFF59E0B)),
-                    onPressed: _showInfoPopup,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              settlements.isEmpty
-                  ? const Center(child: Text('¡Todas las cuentas están saldadas!', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)))
-                  : Column(
-                      children: settlements.map((s) {
-                        return Card(
-                          color: const Color(0xFFFEF3C7),
-                          elevation: 0,
-                          margin: const EdgeInsets.only(bottom: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFFF59E0B))),
-                          child: ListTile(
-                            leading: const Icon(Icons.sync_alt, color: Color(0xFFF59E0B)),
-                            title: RichText(
-                              text: TextSpan(
-                                style: const TextStyle(color: Colors.black87, fontSize: 15),
+                        onDismissed: (_) {
+                          _deleteExpense(exp);
+                        },
+                        child: GestureDetector(
+                          onLongPress: () => _showExpenseActionDialog(exp),
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 1,
+                            child: ListTile(
+                              onTap: () => _showExpenseActionDialog(exp),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              title: Text(exp.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  TextSpan(text: s['from'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  const TextSpan(text: ' debe pagar '),
-                                  TextSpan(text: '$c${s['amount'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                                  const TextSpan(text: ' a '),
-                                  TextSpan(text: s['to'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  Text('Pagó: ${exp.payer}', style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w500)),
+                                  const SizedBox(height: 2),
+                                  Text('Para: ${exp.participants.join(", ")}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('$c${exp.amount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+
+          // PESTAÑA 2: SALDOS Y QUIÉN DEBE A QUIÉN
+          RefreshIndicator(
+            onRefresh: _loadExpenses,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                const Text('Resumen de Saldos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Positivo: Le deben dinero | Negativo: Debe dinero', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                const SizedBox(height: 16),
+                ...widget.group.members.map((m) {
+                  final isMe = m == widget.group.myMemberName || (widget.group.myMemberName == null && m == 'Tú');
+                  final bal = balances[m] ?? 0.0;
+                  final isPositive = bal > 0.01;
+                  final isNegative = bal < -0.01;
+                  final color = isPositive ? Colors.green : (isNegative ? Colors.red : Colors.grey);
+                  return ListTile(
+                    leading: CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Text(m.substring(0, 1), style: TextStyle(color: color, fontWeight: FontWeight.bold))),
+                    title: Row(
+                      children: [
+                        Text(m, style: TextStyle(fontWeight: isMe ? FontWeight.bold : FontWeight.w500)),
+                        if (isMe) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(4)),
+                            child: const Text('Tú', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          )
+                        ]
+                      ],
                     ),
-            ],
+                    trailing: Text(
+                      '${bal > 0 ? '+' : ''}$c${bal.abs().toStringAsFixed(2)}',
+                      style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  );
+                }),
+                
+                const SizedBox(height: 30),
+                const Divider(),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('¿Cómo liquidar?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.help_outline, color: Color(0xFFF59E0B)),
+                      onPressed: _showInfoPopup,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                settlements.isEmpty
+                    ? const Center(child: Text('¡Todas las cuentas están saldadas!', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)))
+                    : Column(
+                        children: settlements.map((s) {
+                          return Card(
+                            color: const Color(0xFFFEF3C7),
+                            elevation: 0,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFFF59E0B))),
+                            child: ListTile(
+                              leading: const Icon(Icons.sync_alt, color: Color(0xFFF59E0B)),
+                              title: RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(color: Colors.black87, fontSize: 15),
+                                  children: [
+                                    TextSpan(text: s['from'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    const TextSpan(text: ' debe pagar '),
+                                    TextSpan(text: '$c${s['amount'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                                    const TextSpan(text: ' a '),
+                                    TextSpan(text: s['to'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+              ],
+            ),
           ),
 
           // PESTAÑA 3: ARCHIVOS
-          widget.group.files.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.folder_open, size: 80, color: Colors.grey.shade300),
-                      const SizedBox(height: 16),
-                      const Text('No hay archivos ni fotos de tickets.', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                      const SizedBox(height: 8),
-                      const Text('Sube facturas o tickets al añadir gastos.', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80, top: 16),
-                  itemCount: widget.group.files.length,
-                  itemBuilder: (context, index) {
-                    final file = widget.group.files[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 1,
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: _getFileColor(file.type).withOpacity(0.2),
-                          child: Icon(_getFileIcon(file.type), color: _getFileColor(file.type)),
-                        ),
-                        title: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Text('Añadido por ${file.uploadedBy} • ${file.sizeMb.toStringAsFixed(1)} MB'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.download, color: Color(0xFF0F172A)),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Descargando ${file.name}...')));
-                          },
-                        ),
+          RefreshIndicator(
+            onRefresh: _loadExpenses,
+            child: widget.group.files.isEmpty
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.folder_open, size: 80, color: Colors.grey.shade300),
+                          const SizedBox(height: 16),
+                          const Text('No hay archivos ni fotos de tickets.', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                          const SizedBox(height: 8),
+                          const Text('Sube facturas o tickets al añadir gastos.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 80, top: 16),
+                    itemCount: widget.group.files.length,
+                    itemBuilder: (context, index) {
+                      final file = widget.group.files[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 1,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: _getFileColor(file.type).withOpacity(0.2),
+                            child: Icon(_getFileIcon(file.type), color: _getFileColor(file.type)),
+                          ),
+                          title: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          subtitle: Text('Añadido por ${file.uploadedBy} • ${file.sizeMb.toStringAsFixed(1)} MB'),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.download, color: Color(0xFF0F172A)),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Descargando ${file.name}...')));
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
