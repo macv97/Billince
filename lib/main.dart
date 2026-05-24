@@ -224,7 +224,7 @@ class _BillinceAppState extends State<BillinceApp> {
           brightness: Brightness.dark,
         ),
         scaffoldBackgroundColor: const Color(0xFF0F172A),
-        cardTheme: const CardTheme(color: Color(0xFF1E293B)), // Azul pizarra para tarjetas
+        cardColor: const Color(0xFF1E293B), // Azul pizarra para tarjetas
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),

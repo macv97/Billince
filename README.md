@@ -37,11 +37,16 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 ## 🚀 Próximas Funcionalidades (Roadmap)
 
 ### Optimización y Nuevas Features
-- **Gestión de Borrado en la Nube:** Estudiar la casuística del borrado de elementos en Supabase. ¿Si un elemento se borra en la app, debe aplicarse un borrado lógico o físico en la base de datos?
+- **Localización (i18n):** Poner la app en Inglés e implementar la funcionalidad dinámica de cambio de idioma.
+- **Rebranding:** Cambiar el título y enfoque de la app, ajustando el concepto ya que no es una app de finanzas estrictamente hablando.
+- **Ingeniería de Requisitos y Testing:** Revisar el diagrama de flujo de la aplicación para pasar por todas las casuísticas posibles (desde modo daltónico hasta escaneo de gastos) para hacer simulacros y corregir fallos ocultos.
+- **Gestión de Borrado en la Nube:** Estudiar la casuística del borrado de elementos en Supabase.
 - **Escaneo Avanzado:** Optimizar la lectura y precisión del escaneo de tickets mediante la cámara.
-- **Exportación e Importación:** Añadir soporte para leer y exportar datos a formatos `.xlsx` o `.csv`, facilitando la visualización de balances en plataformas como Google Drive.
-- **Ingeniería de Requisitos y Testing:** Crear diagramas de flujo y diagramas de casos de uso de la aplicación para tener claro todo el recorrido general y preparar las bases para testing automatizado.
-- **Exploración Continua:** Seguir analizando nuevas ideas y requerimientos de usuario para futuras actualizaciones de la app.
+- **Exportación e Importación:** Añadir soporte para exportar balances a `.xlsx` o `.csv`.
+
+### 🐛 Bugs Conocidos (Próximas Correcciones)
+- **Listas Compartidas:** El nombre de la lista compartida no se actualiza en la vista principal tras guardarlo en los ajustes. Falta asegurar que se refresque el estado al volver hacia atrás.
+
 
 ---
 
