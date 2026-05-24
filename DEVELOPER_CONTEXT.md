@@ -158,38 +158,15 @@ Archivo: `lib/data/supabase_repository.dart`
 
 ---
 
-## 🚧 Estado Actual y Pendientes (Roadmap)
+## 🚧 Estado Actual y Gestión de Tareas (Linear Lifecycle Workflow)
 
-### ✅ Completado
-- **Escaneo 100% local y offline**: Google ML Kit y parseo geométrico local de tickets implementados con total fluidez.
-- **Carrusel Burbuja UX**: Selección y corrección instantánea de importes detectados en el ticket.
-- **Persistencia SQLite**: `LocalDatabase` almacena localmente gastos, listas de compra y checklist items.
-- **Sincronización híbrida a la nube**: Backup automático en Supabase de gastos y listas si la sesión está iniciada.
-- **Análisis de Compras Local**: Lince IA Advisor integrado con generación local de recomendaciones sobre hábitos financieros.
-- **Supabase Auth**: Soporte completo para inicio de sesión y registro de cuentas de usuario mediante correo electrónico.
+La gestión de tareas y el roadmap activo se sincronizan y administran de forma dinámica a través de **Linear** (Team Key: `BIL`) como única fuente de verdad.
 
-### ✅ Bugs Solucionados (Testeo Móvil)
-- **[Auth]** **Registro de cuentas (`Sign Up`):** Se añadió validación en `welcome_screen` que requiere confirmación por email en vez de forzar entrada anónima.
-- **[UI/UX]** **Problemas de Contraste/Visibilidad:** Corregido el color `primaryColor` a `Colors.amber` del botón de registro en modo oscuro.
-- **[QR]** **Escaneo de QR inoperativo:** Implementado `mobile_scanner` con su pantalla nativa tanto en Checklists como en Eventos compartidos.
-- **[Checklist]** **Identidad:** Resuelto mediante la llamada persistente de `_showIdentityDialog` y asignación correcta de `(Tú)`.
-- **[Eventos]** **Identidad e Inmutabilidad en Eventos Compartidos:** Añadida inmutabilidad al botón de eliminar integrante si el usuario a eliminar es el mismo usuario (`isMe`).
-- **[Eventos]** **Borrado Persistente:** Se implementó `leaveSharedGroup` en `SupabaseRepository` para eliminar la entrada en `group_members` en lugar de borrar solo la caché local.
+### 📋 Regla Estricta de Desarrollo y Ciclo de Vida de Tareas
+1. **Detección de Tareas:** El asistente de IA leerá activamente las tareas ubicadas en la columna **TODO** de Linear. **Únicamente** se deben implementar las tareas que el usuario mueva o asigne a la columna **TODO**. Las tareas en *Backlog* quedan en espera hasta ser priorizadas por el usuario.
+2. **Lectura Detallada de Tarjetas (Comentarios y Adjuntos):** Al iniciar cualquier tarea en **TODO**, el asistente debe inspeccionar obligatoriamente el interior de la tarjeta en Linear para comprobar si contiene comentarios, enlaces o imágenes que describan detalladamente la funcionalidad a implementar o el error a solucionar.
+3. **Ciclo de Vida Automatizado (Movimiento de Columnas):**
+   - **In Progress:** Al iniciar el desarrollo de una tarea de la columna **TODO**, el asistente debe actualizar inmediatamente su estado en Linear a **In Progress** (`6c379fe3-2259-4e6d-bdb8-c000b3cb9826`).
+   - **Done:** Tras completar la implementación y pasar con éxito los tests/QA ("Dry-Run mental"), el asistente debe actualizar su estado en Linear a **Done** (`efc74b4f-26a2-4cff-9852-7a7c7854c76f`).
+4. **Tablero Local:** La vista Kanban en `linear_board.md` debe regenerarse con el script `linear_generate_board.py` para reflejar el estado real de Linear.
 
-### 🔴 Pendiente (Prioridad Alta)
-- **[i18n]** Poner la app en Inglés e implementar la funcionalidad del idioma.
-- **[Bug]** Corregir bug por el cual no se cambia el nombre de la lista compartida al darle al botón de guardar cambios. Al entrar a una lista y cambiar el nombre no se guarda ya que al volver hacia atrás y recargar en la pantalla de compartidas no aparece el nombre actualizado.
-- **[QA]** Revisar el diagrama de flujo de la aplicación para pasar por todas las casuisticas posibles que un usuario puede realizar al utilizar la app, desde poner el modo daltónico hasta realizar y escanear un gasto y con eso hacer un simulacro para detectar algún fallo que pueda tener y corregirlo.
-- **[Branding]** Cambiar título de la app, ya que no es una app de finanzas como tal.
-- **[UX]** Finalizar el texto de aviso en la pantalla de inicio aclarando el modo offline/invitado e incentivar el inicio de sesión.
-- **[Auth]** Implementar Google Sign-In real.
-- **[Auth]** Integrar inicio de sesión biométrico / huella dactilar tras la primera autenticación.
-- **[UX]** Activar funcionalidad completa en el botón "Mi Perfil" al iniciar la aplicación.
-- **[Branding]** Homologar el icono de lanzamiento de la app (launcher icon) en dispositivos con el logo circular del ojo de lince de la UI.
-- **[Gastos]** Soporte para actualización (UPDATE) de gastos en Supabase (actualmente solo en local).
-
-### 🟡 Pendiente (Roadmap)
-- **Clasificación Automática:** IA que categorice gastos según el nombre del comercio.
-- **Widget de Escritorio:** Android/iOS Home Screen Widget para eventos y presupuesto diario.
-- **Lince IA Predictivo:** Análisis avanzado para predecir quedarse sin saldo.
-- **Gastos Compartidos:** Sincronización en tiempo real vía Supabase Realtime.

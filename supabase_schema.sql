@@ -135,3 +135,19 @@ CREATE TABLE IF NOT EXISTS shared_checklist_logs (
 
 ALTER TABLE shared_checklist_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can manage audit logs" ON shared_checklist_logs FOR ALL USING (true);
+
+-- 10. Función Segura para Eliminar Cuenta (Bypass Client Deletion)
+CREATE OR REPLACE FUNCTION delete_user_account()
+RETURNS void AS $$
+BEGIN
+  -- Borrar datos personales y vinculaciones
+  DELETE FROM public.user_expenses WHERE user_id = auth.uid();
+  DELETE FROM public.user_shopping_lists WHERE user_id = auth.uid();
+  DELETE FROM public.group_members WHERE user_id = auth.uid();
+  DELETE FROM public.shared_checklist_members WHERE user_id = auth.uid();
+
+  -- Eliminar el usuario de la autenticación de Supabase
+  DELETE FROM auth.users WHERE id = auth.uid();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+

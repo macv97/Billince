@@ -38,6 +38,20 @@ class SupabaseRepository {
     // pero AppData sí se limpia para que la sesión arranque fresca.
   }
 
+  static Future<void> deleteUserAccount() async {
+    final user = currentUser;
+    if (user == null) return;
+    try {
+      // Invocar la función RPC para eliminar el usuario y sus datos sincronizados
+      await client.rpc('delete_user_account');
+      // Limpiar sesión local y AppData
+      await signOut();
+    } catch (e) {
+      print("Error deleting user account: $e");
+      rethrow;
+    }
+  }
+
   // ── Shared Expenses (Cloud-synced via Supabase) ─────────────
   
   static Future<void> joinSharedGroup(String groupId) async {

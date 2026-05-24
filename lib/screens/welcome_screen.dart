@@ -369,63 +369,150 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? const Color(0xFF0F172A) 
-                : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          padding: const EdgeInsets.only(top: 32, left: 24, right: 24, bottom: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 50,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: 32),
-                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
+        final isLogged = SupabaseRepository.isAuthenticated;
+        final userEmail = SupabaseRepository.currentUser?.email ?? 'Usuario no identificado';
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? const Color(0xFF0F172A) 
+                    : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
               ),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.amber, width: 3),
-                ),
-                child: const CircleAvatar(
-                  radius: 45,
-                  backgroundColor: Color(0xFF1E293B),
-                  child: Icon(Icons.person_rounded, size: 50, color: Colors.amber),
-                ),
+              padding: const EdgeInsets.only(top: 32, left: 24, right: 24, bottom: 40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 32),
+                    decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: isLogged ? const Color(0xFF10B981) : Colors.amber, width: 3),
+                    ),
+                    child: CircleAvatar(
+                      radius: 45,
+                      backgroundColor: const Color(0xFF1E293B),
+                      child: Icon(
+                        Icons.person_rounded, 
+                        size: 50, 
+                        color: isLogged ? const Color(0xFF10B981) : Colors.amber
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    isLogged ? 'Perfil Sincronizado' : 'Modo Invitado', 
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isLogged ? userEmail : 'Actualmente tus datos solo se guardan en este dispositivo. Inicia sesión para activar el respaldo en la nube y sincronización.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade400, height: 1.5),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      if (isLogged) {
+                        await SupabaseRepository.signOut();
+                        if (mounted) {
+                          setState(() {});
+                        }
+                      } else {
+                        _showAuthDialog();
+                      }
+                    },
+                    icon: Icon(isLogged ? Icons.logout : Icons.cloud_sync_rounded),
+                    label: Text(
+                      isLogged ? 'Cerrar Sesión' : 'Iniciar Sesión / Registrarse', 
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isLogged ? Colors.red.shade50 : Theme.of(context).colorScheme.primary,
+                      foregroundColor: isLogged ? Colors.red : Colors.white,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                  ),
+                  if (isLogged) ...[
+                    const SizedBox(height: 12),
+                    TextButton.icon(
+                      onPressed: () => _showDeleteAccountConfirmation(context),
+                      icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
+                      label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 24),
-              const Text('Modo Invitado', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 12),
-              Text(
-                'Actualmente tus datos solo se guardan en este dispositivo. Inicia sesión para activar el respaldo en la nube y sincronización.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade400, height: 1.5),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showAuthDialog();
-                },
-                icon: const Icon(Icons.cloud_sync_rounded),
-                label: const Text('Iniciar Sesión / Registrarse', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-              )
-            ],
-          ),
+            );
+          }
         );
       }
+    );
+  }
+
+  void _showDeleteAccountConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('¿Eliminar cuenta?'),
+          content: const Text('Esta acción es irreversible. Eliminará por completo tu cuenta y todos tus datos (gastos, listas y participación en eventos) de la nube de Supabase de forma permanente.'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+              onPressed: () async {
+                Navigator.pop(ctx); // Close dialog
+                Navigator.pop(context); // Close profile sheet
+                
+                // Mostrar indicador de carga
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.amber)),
+                );
+                
+                try {
+                  await SupabaseRepository.deleteUserAccount();
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close loading dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Cuenta eliminada con éxito.')),
+                    );
+                    setState(() {}); // Refresh WelcomeScreen state
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close loading dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al eliminar cuenta: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Eliminar definitivamente', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -579,7 +666,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.person_outline, color: Colors.white70, size: 30),
+                    icon: Icon(
+                      SupabaseRepository.isAuthenticated ? Icons.person_rounded : Icons.person_outline, 
+                      color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : Colors.white70, 
+                      size: 30
+                    ),
                     onPressed: _showProfileDialog,
                   ),
                   IconButton(

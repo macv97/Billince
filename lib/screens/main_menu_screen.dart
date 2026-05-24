@@ -416,9 +416,76 @@ class MainMenuScreen extends StatelessWidget {
                     },
                   ),
                 ),
+                if (isLogged) ...[
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () => _showDeleteAccountConfirmation(context),
+                    icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
+                    label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteAccountConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('¿Eliminar cuenta?'),
+          content: const Text('Esta acción es irreversible. Eliminará por completo tu cuenta y todos tus datos (gastos, listas y participación en eventos) de la nube de Supabase de forma permanente.'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+              onPressed: () async {
+                Navigator.pop(ctx); // Close dialog
+                Navigator.pop(context); // Close profile sheet
+                
+                // Mostrar indicador de carga
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.amber)),
+                );
+                
+                try {
+                  await SupabaseRepository.deleteUserAccount();
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close loading dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Cuenta eliminada con éxito.')),
+                    );
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      (route) => false,
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close loading dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al eliminar cuenta: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Eliminar definitivamente', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
         );
       },
     );

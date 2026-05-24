@@ -34,18 +34,16 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 
 ---
 
-## 🚀 Próximas Funcionalidades (Roadmap)
+## 🚀 Gestión de Tareas y Roadmap (Linear Integration)
 
-### Optimización y Nuevas Features
-- **Localización (i18n):** Poner la app en Inglés e implementar la funcionalidad del idioma.
-- **Rebranding:** Cambiar título de la app, ya que no es una app de finanzas como tal.
-- **QA y Testing Exhaustivo:** Revisar el diagrama de flujo de la aplicación para pasar por todas las casuísticas posibles (desde poner el modo daltónico hasta realizar y escanear un gasto) y hacer un simulacro para detectar fallos.
-- **Gestión de Borrado en la Nube:** Estudiar la casuística del borrado de elementos en Supabase. ¿Si un elemento se borra en la app, debe aplicarse un borrado lógico o físico en la base de datos?
-- **Escaneo Avanzado:** Optimizar la lectura y precisión del escaneo de tickets mediante la cámara.
-- **Exportación e Importación:** Añadir soporte para leer y exportar datos a formatos `.xlsx` o `.csv`.
+El roadmap, los bugs pendientes y el ciclo de desarrollo activo se gestionan íntegramente a través de **Linear** como fuente única de verdad.
 
-### 🐛 Corrección de Bugs
-- **Listas Compartidas:** Corregir bug por el cual no se cambia el nombre de la lista compartida al darle al botón de guardar cambios. Al entrar a una lista y cambiar el nombre no se guarda ya que al volver hacia atrás y recargar en la pantalla de compartidas no aparece el nombre actualizado.
+### 📋 Flujo de Trabajo del Asistente de IA
+- **Entrada (TODO):** El asistente monitorea activamente la columna **TODO** del tablero de Linear. Solo se implementan las tareas priorizadas en esta columna.
+- **Lectura Detallada:** Antes de codificar, el asistente inspecciona obligatoriamente los comentarios, adjuntos, enlaces e imágenes en el interior de cada tarjeta para capturar todas las especificaciones.
+- **Ciclo de Vida:** Las tareas se mueven automáticamente a **In Progress** durante el desarrollo y a **Done** tras una validación y testing exitosos.
+- **Tablero Kanban:** Puedes ver e interactuar localmente con la vista del flujo de trabajo en [linear_board.md](file:///C:/Users/macv2/.gemini/antigravity-ide/brain/95a82b9c-0e26-42ee-94a1-b897398c35ab/linear_board.md), que se actualiza automáticamente con la API.
+
 
 
 ---
