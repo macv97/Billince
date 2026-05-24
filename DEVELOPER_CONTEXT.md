@@ -19,11 +19,13 @@ Como desarrollador principal de aplicaciones móviles con enfoque experto en **A
 *   **Nombre:** Billince (Fusión de *Bill* -factura- y *Lince* -animal de visión aguda-).
 *   **Concepto:** Visión experta y precisión en las finanzas personales.
 *   **Moneda por defecto:** `€` (Euro). Configurable en la WelcomeScreen (€, $, £). La moneda del usuario autenticado se carga desde `user_settings` en Supabase. Se usa `AppData.currency` en TODA la app.
-*   **Paleta de Colores (Lynx Palette):**
-    *   **Primario (Midnight Blue):** `#0F172A` (Elegancia y seguridad).
-    *   **Acento (Amber/Lynx Eye):** `#F59E0B` (Agudeza visual y llamadas a la acción).
+*   **Paleta de Colores (Elegancia y Tecnología):**
+    *   **Fondo (Midnight Blue):** `#0F172A` (Superficie principal y fondo).
+    *   **Tarjetas/Superficie (Slate Blue):** `#1E293B` (Tarjetas y menús).
+    *   **Texto Principal (Ice White):** `#F8FAFC` (Títulos y texto primario).
+    *   **Texto Secundario (Blue Grey):** `#94A3B8` (Párrafos y subtítulos).
+    *   **Acento Interactivo (Cyan/Amber):** `#38BDF8` (Cian brillante) y `#F59E0B` (Amber).
     *   **Éxito (Emerald):** `#10B981` (Saldos positivos y confirmaciones).
-    *   **Fondo/Soft (Cream Amber):** `#FEF3C7` (Superficies secundarias y AppBars).
 *   **Iconografía:** El logo principal es un **ojo de lince** minimalista.
 
 ---

@@ -214,13 +214,17 @@ class _BillinceAppState extends State<BillinceApp> {
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: settings.interfaceColor,
-          primary: settings.interfaceColor,
-          secondary: const Color(0xFF2563EB),
-          tertiary: const Color(0xFF0D9488),
-          surface: const Color(0xFF0F172A),
+          seedColor: const Color(0xFF38BDF8),
+          primary: const Color(0xFF38BDF8), // Cyan brillante
+          secondary: const Color(0xFF8B5CF6),
+          tertiary: const Color(0xFF10B981),
+          surface: const Color(0xFF0F172A), // Azul medianoche profundo
+          onSurface: const Color(0xFFF8FAFC), // Blanco hielo
+          onSurfaceVariant: const Color(0xFF94A3B8), // Gris azulado
           brightness: Brightness.dark,
         ),
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        cardTheme: const CardTheme(color: Color(0xFF1E293B)), // Azul pizarra para tarjetas
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),

@@ -78,11 +78,11 @@ class MainMenuScreen extends StatelessWidget {
             children: [
               Text(
                 'Tus finanzas,',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: colorScheme.primary, height: 1.1),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Theme.of(context).brightness == Brightness.dark ? colorScheme.onSurface : colorScheme.primary, height: 1.1),
               ),
               Text(
                 'bajo control experto.',
-                style: TextStyle(fontSize: 22, color: Colors.blueGrey.shade400, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 22, color: Theme.of(context).brightness == Brightness.dark ? colorScheme.onSurfaceVariant : Colors.blueGrey.shade400, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 32),
 
@@ -185,8 +185,8 @@ class MainMenuScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? color.withOpacity(0.15) : Colors.white;
-    final borderColor = isDark ? color.withOpacity(0.3) : color.withOpacity(0.1);
+    final bgColor = isDark ? Theme.of(context).cardColor : Colors.white;
+    final borderColor = isDark ? Colors.white.withOpacity(0.1) : color.withOpacity(0.1);
 
     return Container(
       decoration: BoxDecoration(
@@ -219,10 +219,10 @@ class MainMenuScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.primary)),
                     if (subtitle.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600)),
+                      Text(subtitle, style: TextStyle(fontSize: 13, color: isDark ? Theme.of(context).colorScheme.onSurfaceVariant : Colors.blueGrey.shade400, fontWeight: FontWeight.w600)),
                     ]
                   ],
                 ),
