@@ -37,15 +37,15 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 ## 🚀 Próximas Funcionalidades (Roadmap)
 
 ### Optimización y Nuevas Features
-- **Localización (i18n):** Poner la app en Inglés e implementar la funcionalidad dinámica de cambio de idioma.
-- **Rebranding:** Cambiar el título y enfoque de la app, ajustando el concepto ya que no es una app de finanzas estrictamente hablando.
-- **Ingeniería de Requisitos y Testing:** Revisar el diagrama de flujo de la aplicación para pasar por todas las casuísticas posibles (desde modo daltónico hasta escaneo de gastos) para hacer simulacros y corregir fallos ocultos.
-- **Gestión de Borrado en la Nube:** Estudiar la casuística del borrado de elementos en Supabase.
+- **Localización (i18n):** Poner la app en Inglés e implementar la funcionalidad del idioma.
+- **Rebranding:** Cambiar título de la app, ya que no es una app de finanzas como tal.
+- **QA y Testing Exhaustivo:** Revisar el diagrama de flujo de la aplicación para pasar por todas las casuísticas posibles (desde poner el modo daltónico hasta realizar y escanear un gasto) y hacer un simulacro para detectar fallos.
+- **Gestión de Borrado en la Nube:** Estudiar la casuística del borrado de elementos en Supabase. ¿Si un elemento se borra en la app, debe aplicarse un borrado lógico o físico en la base de datos?
 - **Escaneo Avanzado:** Optimizar la lectura y precisión del escaneo de tickets mediante la cámara.
-- **Exportación e Importación:** Añadir soporte para exportar balances a `.xlsx` o `.csv`.
+- **Exportación e Importación:** Añadir soporte para leer y exportar datos a formatos `.xlsx` o `.csv`.
 
-### 🐛 Bugs Conocidos (Próximas Correcciones)
-- **Listas Compartidas:** El nombre de la lista compartida no se actualiza en la vista principal tras guardarlo en los ajustes. Falta asegurar que se refresque el estado al volver hacia atrás.
+### 🐛 Corrección de Bugs
+- **Listas Compartidas:** Corregir bug por el cual no se cambia el nombre de la lista compartida al darle al botón de guardar cambios. Al entrar a una lista y cambiar el nombre no se guarda ya que al volver hacia atrás y recargar en la pantalla de compartidas no aparece el nombre actualizado.
 
 
 ---

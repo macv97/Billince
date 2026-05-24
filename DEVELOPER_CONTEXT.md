@@ -177,10 +177,10 @@ Archivo: `lib/data/supabase_repository.dart`
 - **[Eventos]** **Borrado Persistente:** Se implementó `leaveSharedGroup` en `SupabaseRepository` para eliminar la entrada en `group_members` en lugar de borrar solo la caché local.
 
 ### 🔴 Pendiente (Prioridad Alta)
-- **[i18n]** Poner la aplicación en Inglés e implementar la funcionalidad dinámica del idioma.
-- **[Bug]** Corregir bug en "Listas Compartidas" donde el nombre no se actualiza en la vista principal al guardar los cambios en la pantalla de edición de la lista.
-- **[QA]** Revisar el diagrama de flujo y realizar un simulacro completo de todas las casuísticas de usuario (accesibilidad, gastos, cámara) para detectar y parchear fallos ocultos.
-- **[Branding]** Cambiar el título de la aplicación y refinar su descripción/identidad, ya que no se ajusta completamente al perfil de "app de finanzas".
+- **[i18n]** Poner la app en Inglés e implementar la funcionalidad del idioma.
+- **[Bug]** Corregir bug por el cual no se cambia el nombre de la lista compartida al darle al botón de guardar cambios. Al entrar a una lista y cambiar el nombre no se guarda ya que al volver hacia atrás y recargar en la pantalla de compartidas no aparece el nombre actualizado.
+- **[QA]** Revisar el diagrama de flujo de la aplicación para pasar por todas las casuisticas posibles que un usuario puede realizar al utilizar la app, desde poner el modo daltónico hasta realizar y escanear un gasto y con eso hacer un simulacro para detectar algún fallo que pueda tener y corregirlo.
+- **[Branding]** Cambiar título de la app, ya que no es una app de finanzas como tal.
 - **[UX]** Finalizar el texto de aviso en la pantalla de inicio aclarando el modo offline/invitado e incentivar el inicio de sesión.
 - **[Auth]** Implementar Google Sign-In real.
 - **[Auth]** Integrar inicio de sesión biométrico / huella dactilar tras la primera autenticación.
