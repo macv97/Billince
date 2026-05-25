@@ -368,12 +368,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (sheetCtx) {
         final isLogged = SupabaseRepository.isAuthenticated;
         final userEmail = SupabaseRepository.currentUser?.email ?? 'Usuario no identificado';
 
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (sheetCtx, setModalState) {
             return Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark 
@@ -421,7 +421,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   const SizedBox(height: 32),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      Navigator.pop(context);
+                      Navigator.pop(sheetCtx);
                       if (isLogged) {
                         await SupabaseRepository.signOut();
                         if (mounted) {
@@ -447,7 +447,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   if (isLogged) ...[
                     const SizedBox(height: 12),
                     TextButton.icon(
-                      onPressed: () => _showDeleteAccountConfirmation(context),
+                      onPressed: () => _showDeleteAccountConfirmation(sheetCtx),
                       icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
                       label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                       style: TextButton.styleFrom(
@@ -464,13 +464,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  void _showDeleteAccountConfirmation(BuildContext context) {
+  void _showDeleteAccountConfirmation(BuildContext sheetCtx) {
     showDialog(
-      context: context,
+      context: sheetCtx,
       builder: (ctx) {
         return AlertDialog(
           title: const Text('¿Eliminar cuenta?'),
-          content: const Text('Esta acción es irreversible. Eliminará por completo tu cuenta y todos tus datos (gastos, listas y participación en eventos) de la nube de Supabase de forma permanente.'),
+          content: const Text('Esta acción es irreversible. Eliminará por completo tu cuenta y todos tus datos (gastos, listas y participación en eventos) de la nube de forma permanente.'),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           actions: [
             TextButton(
@@ -481,29 +481,29 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
               onPressed: () async {
                 Navigator.pop(ctx); // Close dialog
-                Navigator.pop(context); // Close profile sheet
+                Navigator.pop(sheetCtx); // Close profile sheet
                 
                 // Mostrar indicador de carga
                 showDialog(
-                  context: context,
+                  context: this.context,
                   barrierDismissible: false,
-                  builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.amber)),
+                  builder: (loadingCtx) => const Center(child: CircularProgressIndicator(color: Colors.amber)),
                 );
                 
                 try {
                   await SupabaseRepository.deleteUserAccount();
-                  if (context.mounted) {
-                    Navigator.pop(context); // Close loading dialog
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  if (mounted) {
+                    Navigator.of(this.context).pop(); // Close loading dialog
+                    ScaffoldMessenger.of(this.context).showSnackBar(
                       const SnackBar(content: Text('Cuenta eliminada con éxito.')),
                     );
                     setState(() {}); // Refresh WelcomeScreen state
                   }
                 } catch (e) {
-                  if (context.mounted) {
-                    Navigator.pop(context); // Close loading dialog
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al eliminar cuenta: $e')),
+                  if (mounted) {
+                    Navigator.of(this.context).pop(); // Close loading dialog
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      const SnackBar(content: Text('Error al eliminar la cuenta. Por favor, inténtelo más tarde.')),
                     );
                   }
                 }

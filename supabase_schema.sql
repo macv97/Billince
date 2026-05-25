@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS shared_groups (
 ALTER TABLE shared_groups ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Group visibility" ON shared_groups FOR SELECT USING (true); -- o restringir por members
 CREATE POLICY "Group insertion" ON shared_groups FOR INSERT WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Anyone can update groups" ON shared_groups FOR UPDATE USING (true);
 
 -- 3. Miembros del Grupo (Deep Link Invites)
 CREATE TABLE IF NOT EXISTS group_members (
@@ -93,6 +94,7 @@ CREATE TABLE IF NOT EXISTS shared_checklists (
 ALTER TABLE shared_checklists ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Shared checklists visibility" ON shared_checklists FOR SELECT USING (true);
 CREATE POLICY "Shared checklists insertion" ON shared_checklists FOR INSERT WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Anyone can update shared checklists" ON shared_checklists FOR UPDATE USING (true);
 
 -- 7. Miembros de las listas compartidas
 CREATE TABLE IF NOT EXISTS shared_checklist_members (

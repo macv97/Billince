@@ -360,11 +360,11 @@ class MainMenuScreen extends StatelessWidget {
     );
   }
 
-  void _showProfileSheet(BuildContext context) {
+  void _showProfileSheet(BuildContext parentContext) {
     showModalBottomSheet(
-      context: context,
+      context: parentContext,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
+      builder: (sheetCtx) {
         final isLogged = SupabaseRepository.isAuthenticated;
         final userEmail = SupabaseRepository.currentUser?.email ?? 'Usuario no identificado';
 
@@ -396,7 +396,7 @@ class MainMenuScreen extends StatelessWidget {
                   height: 50,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isLogged ? Colors.red.shade50 : Theme.of(context).colorScheme.primary,
+                      backgroundColor: isLogged ? Colors.red.shade50 : Theme.of(parentContext).colorScheme.primary,
                       foregroundColor: isLogged ? Colors.red : Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -404,12 +404,12 @@ class MainMenuScreen extends StatelessWidget {
                     icon: Icon(isLogged ? Icons.logout : Icons.login),
                     label: Text(isLogged ? 'Cerrar sesión' : 'Iniciar sesión / Registrarse'),
                     onPressed: () {
-                      Navigator.pop(context); // Close sheet
+                      Navigator.pop(sheetCtx); // Close sheet
                       if (isLogged) {
                         SupabaseRepository.signOut();
                       }
                       Navigator.pushAndRemoveUntil(
-                        context,
+                        parentContext,
                         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                         (route) => false,
                       );
@@ -419,7 +419,7 @@ class MainMenuScreen extends StatelessWidget {
                 if (isLogged) ...[
                   const SizedBox(height: 12),
                   TextButton.icon(
-                    onPressed: () => _showDeleteAccountConfirmation(context),
+                    onPressed: () => _showDeleteAccountConfirmation(parentContext, sheetCtx),
                     icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
                     label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                     style: TextButton.styleFrom(
@@ -435,13 +435,13 @@ class MainMenuScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteAccountConfirmation(BuildContext context) {
+  void _showDeleteAccountConfirmation(BuildContext parentContext, BuildContext sheetCtx) {
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (ctx) {
         return AlertDialog(
           title: const Text('¿Eliminar cuenta?'),
-          content: const Text('Esta acción es irreversible. Eliminará por completo tu cuenta y todos tus datos (gastos, listas y participación en eventos) de la nube de Supabase de forma permanente.'),
+          content: const Text('Esta acción es irreversible. Eliminará por completo tu cuenta y todos tus datos (gastos, listas y participación en eventos) de la nube de forma permanente.'),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           actions: [
             TextButton(
@@ -452,33 +452,33 @@ class MainMenuScreen extends StatelessWidget {
               style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
               onPressed: () async {
                 Navigator.pop(ctx); // Close dialog
-                Navigator.pop(context); // Close profile sheet
+                Navigator.pop(sheetCtx); // Close profile sheet
                 
                 // Mostrar indicador de carga
                 showDialog(
-                  context: context,
+                  context: parentContext,
                   barrierDismissible: false,
-                  builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.amber)),
+                  builder: (loadingCtx) => const Center(child: CircularProgressIndicator(color: Colors.amber)),
                 );
                 
                 try {
                   await SupabaseRepository.deleteUserAccount();
-                  if (context.mounted) {
-                    Navigator.pop(context); // Close loading dialog
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  if (parentContext.mounted) {
+                    Navigator.of(parentContext).pop(); // Close loading dialog
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
                       const SnackBar(content: Text('Cuenta eliminada con éxito.')),
                     );
                     Navigator.pushAndRemoveUntil(
-                      context,
+                      parentContext,
                       MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                       (route) => false,
                     );
                   }
                 } catch (e) {
-                  if (context.mounted) {
-                    Navigator.pop(context); // Close loading dialog
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al eliminar cuenta: $e')),
+                  if (parentContext.mounted) {
+                    Navigator.of(parentContext).pop(); // Close loading dialog
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
+                      const SnackBar(content: Text('Error al eliminar la cuenta. Por favor, inténtelo más tarde.')),
                     );
                   }
                 }
