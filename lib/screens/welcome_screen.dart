@@ -88,7 +88,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       onChanged: (v) { if (v != null) settings.setLanguage(v); },
                     ),
                   ),
-                  _buildCenteredSetting(
+                  _buildCenteredSetting(context,
                     icon: Icons.dark_mode,
                     color: Colors.indigo,
                     title: 'Tema Visual',
@@ -104,7 +104,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       onChanged: (v) { if (v != null) settings.setThemeMode(v); },
                     ),
                   ),
-                  _buildCenteredSetting(
+                  _buildCenteredSetting(context,
                     icon: Icons.color_lens,
                     color: Colors.orange,
                     title: 'Color Principal',
@@ -125,7 +125,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     padding: EdgeInsets.only(top: 24, bottom: 12),
                     child: Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal), textAlign: TextAlign.center),
                   ),
-                  _buildCenteredSetting(
+                  _buildCenteredSetting(context,
                     icon: Icons.visibility,
                     color: Colors.teal,
                     title: 'Daltonismo',
@@ -142,7 +142,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       onChanged: (v) { if (v != null) settings.setColorBlindnessMode(v); },
                     ),
                   ),
-                  _buildCenteredSetting(
+                  _buildCenteredSetting(context,
                     icon: Icons.text_increase,
                     color: Colors.teal,
                     title: 'Tamaño Texto',
@@ -158,7 +158,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                     ),
                   ),
-                  _buildCenteredSetting(
+                  _buildCenteredSetting(context,
                     icon: Icons.fingerprint,
                     color: Colors.teal,
                     title: 'Huella Dactilar',
@@ -773,7 +773,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  Widget _buildCenteredSetting({required IconData icon, required Color color, required String title, required Widget child}) {
+  Widget _buildCenteredSetting(BuildContext context, {required IconData icon, required Color color, required String title, required Widget child}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Container(
@@ -797,7 +797,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   child: Icon(icon, color: color, size: 22),
                 ),
                 const SizedBox(width: 16),
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)),
+                Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)),
               ],
             ),
             child,
