@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/app_data.dart';
 import '../data/settings_provider.dart';
 import '../data/supabase_repository.dart';
@@ -14,6 +16,47 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   String _selectedCurrency = '€';
+  late StreamSubscription<AuthState> _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      if (data.event == AuthChangeEvent.signedIn) {
+        try {
+          final cloudGroups = await SupabaseRepository.fetchUserGroups();
+          AppData.sharedGroups.clear();
+          AppData.sharedGroups.addAll(cloudGroups);
+          
+          final cloudChecklists = await SupabaseRepository.fetchUserSharedChecklists();
+          AppData.sharedChecklists.clear();
+          AppData.sharedChecklists.addAll(cloudChecklists);
+          
+          final cloudExpenses = await SupabaseRepository.fetchUserExpenses();
+          for (var ce in cloudExpenses) {
+            if (!AppData.expenses.any((e) => e.id == ce.id)) {
+              AppData.expenses.add(ce);
+            }
+          }
+          AppData.expenses.sort((a, b) => b.date.compareTo(a.date));
+        } catch (_) {}
+        
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+            (route) => false,
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
 
   void _showSettingsDialog() {
     showModalBottomSheet(
@@ -333,6 +376,41 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               }
                             },
                             child: Text(isLogin ? 'Entrar a mi cuenta' : 'Crear mi cuenta', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              setModalState(() {
+                                _isLoadingAuth = true;
+                                errorMessage = null;
+                                successMessage = null;
+                              });
+                              try {
+                                await SupabaseRepository.signInWithGoogle();
+                                if (mounted) {
+                                  Navigator.pop(ctx);
+                                }
+                              } catch (e) {
+                                setModalState(() {
+                                  if (e.toString().contains('sign_in_canceled') || e.toString().contains('cancelado')) {
+                                    errorMessage = 'Inicio de sesión cancelado.';
+                                  } else {
+                                    errorMessage = 'Error al conectar con Google. Verifica tu conexión o configuración.';
+                                  }
+                                  _isLoadingAuth = false;
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.g_mobiledata, size: 30),
+                            label: const Text('Continuar con Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+                              foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 0,
+                              side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
                           ),
                           const SizedBox(height: 16),
                           TextButton(

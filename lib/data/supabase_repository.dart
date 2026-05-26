@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/expense.dart';
 import '../models/checklist_item.dart';
 import '../models/shared_expense.dart';
@@ -18,6 +20,29 @@ class SupabaseRepository {
   // -- Auth Methods (only needed for shared expenses) --
   static Future<AuthResponse> signIn(String email, String password) async {
     return await client.auth.signInWithPassword(email: email, password: password);
+  }
+
+  static Future<void> signInWithGoogle() async {
+    final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
+    final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'] ?? '';
+
+    await GoogleSignIn.instance.initialize(
+      serverClientId: webClientId.isNotEmpty ? webClientId : null,
+      clientId: iosClientId.isNotEmpty ? iosClientId : null,
+    );
+    
+    final googleUser = await GoogleSignIn.instance.authenticate();
+    final googleAuth = googleUser.authentication;
+    final idToken = googleAuth.idToken;
+
+    if (idToken == null) {
+      throw 'Error al obtener credenciales de Google.';
+    }
+
+    await client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+    );
   }
 
   static Future<AuthResponse> signUp(String email, String password) async {

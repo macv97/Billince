@@ -350,6 +350,17 @@ class MainMenuScreen extends StatelessWidget {
                       onChanged: (v) { settings.setTextScaleFactor(v); },
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  _buildCenteredSetting(
+                    icon: Icons.fingerprint,
+                    color: Colors.teal,
+                    title: 'Huella Dactilar',
+                    child: Switch(
+                      value: settings.useBiometrics,
+                      onChanged: (v) { settings.setUseBiometrics(v); },
+                      activeColor: Colors.teal,
+                    ),
+                  ),
                   const SizedBox(height: 20),
                 ],
               ),

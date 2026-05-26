@@ -7,6 +7,7 @@ import 'package:app_links/app_links.dart';
 
 import 'screens/main_menu_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/app_lock_screen.dart';
 import 'data/settings_provider.dart';
 import 'data/local_database.dart';
 import 'data/app_data.dart';
@@ -246,7 +247,7 @@ class _BillinceAppState extends State<BillinceApp> {
         return wrappedChild;
       },
       home: Supabase.instance.client.auth.currentSession != null 
-          ? const MainMenuScreen() 
+          ? (settings.useBiometrics ? const AppLockScreen() : const MainMenuScreen())
           : const WelcomeScreen(),
     );
   }
