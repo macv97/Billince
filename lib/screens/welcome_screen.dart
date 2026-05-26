@@ -73,7 +73,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 children: [
                   const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 24),
-                  _buildCenteredSetting(
+                  _buildCenteredSetting(context,
                     icon: Icons.language,
                     color: Colors.blueGrey,
                     title: 'Idioma',

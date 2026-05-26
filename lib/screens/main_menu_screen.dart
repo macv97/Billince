@@ -374,7 +374,7 @@ class MainMenuScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _buildCenteredSetting(
+                  _buildCenteredSetting(context,
                     icon: Icons.fingerprint,
                     color: Colors.teal,
                     title: 'Huella Dactilar',
