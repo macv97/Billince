@@ -144,9 +144,14 @@ RETURNS void AS $$
 BEGIN
   -- Borrar datos personales y vinculaciones
   DELETE FROM public.user_expenses WHERE user_id = auth.uid();
+  DELETE FROM public.expenses WHERE user_id = auth.uid();
   DELETE FROM public.user_shopping_lists WHERE user_id = auth.uid();
   DELETE FROM public.group_members WHERE user_id = auth.uid();
   DELETE FROM public.shared_checklist_members WHERE user_id = auth.uid();
+
+  -- Borrar grupos y listas compartidas creadas por el usuario (evita error de Foreign Key)
+  DELETE FROM public.shared_groups WHERE created_by = auth.uid();
+  DELETE FROM public.shared_checklists WHERE created_by = auth.uid();
 
   -- Eliminar el usuario de la autenticación de Supabase
   DELETE FROM auth.users WHERE id = auth.uid();
