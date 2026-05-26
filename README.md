@@ -65,6 +65,10 @@ El roadmap, los bugs pendientes y el ciclo de desarrollo activo se gestionan ín
 - **Redirección de Confirmación de Correo:** Se solucionó el error de redirección a `localhost` configurando explícitamente el parámetro `emailRedirectTo: 'https://billince.app'` en la autenticación de Supabase.
 - **Rueda de Ajustes en Eventos:** Se eliminó la acción de dejar pulsado y se añadió un botón de ajustes en cada evento para gestionar nombre, moneda y participantes, asegurando que los cambios se sincronicen en la nube.
 - **Ajustes en Menú Principal y Tema:** Se añadió el icono de ajustes de accesibilidad en el menú principal y se corrigió el color de fondo del Modo Oscuro a Midnight Blue (`#0F172A`).
+- **Eliminación de Cuenta Definitiva:** Se corrigió el trigger RPC en Supabase garantizando el borrado en cascada del usuario limpiando primero sus relaciones en grupos, listas, ítems y gastos sin vulnerar las llaves foráneas.
+- **Rediseño del Menú de Ajustes:** Se rediseñó por completo el diálogo de configuración, pasando de elementos a pantalla completa a un layout compacto en filas estilo panel de control profesional.
+- **Resolución de Overflows Visuales:** Se solventó el error de desbordamiento en pantallas pequeñas en la barra de Ajustes de Accesibilidad (Slider de texto) y botones de navegación de la barra superior.
+- **Branding Consolidado:** Integración nativa del isotipo Lince en el Launcher del dispositivo móvil y limpieza visual en la pantalla de bienvenida.
 
 ---
 

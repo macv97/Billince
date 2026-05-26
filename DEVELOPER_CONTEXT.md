@@ -34,10 +34,11 @@ Como desarrollador principal de aplicaciones móviles con enfoque experto en **A
 
 ```
 1. BIENVENIDA Y AUTENTICACIÓN
-   → WelcomeScreen: El usuario selecciona su moneda
-   → Puede iniciar sesión (Email/contraseña) o registrarse con validación avanzada de errores
-   → Tras login: se cargan ajustes del usuario y datos de Supabase
-   → Opción: Continuar sin sesión (datos volátiles, funciones de IA deshabilitadas)
+   → WelcomeScreen: El usuario selecciona su moneda global.
+   → Autenticación Múltiple: Puede iniciar sesión/registrarse mediante Email y Contraseña o con Google Sign-In (Integración Nativa).
+   → Protección de Privacidad: Soporte para Biometría (Huella Dactilar/FaceID) como capa de seguridad al arrancar la app si se configura en ajustes.
+   → Tras login: se cargan ajustes del usuario y datos de Supabase.
+   → Opción: Continuar sin sesión (datos volátiles, funciones colaborativas y backup nube deshabilitadas).
 
 2. LISTA DE LA COMPRA
    → El usuario crea una lista antes de ir a comprar.
@@ -99,7 +100,9 @@ Archivo: `lib/data/supabase_repository.dart`
 |---|---|
 | `signIn(email, password)` | Login con email |
 | `signUp(email, password)` | Registro de nuevo usuario |
+| `signInWithGoogle()` | Inicio de sesión OAuth con Google Sign-In |
 | `signOut()` | Cierre de sesión del cliente de Supabase |
+| `deleteUserAccount()` | Ejecuta el RPC `delete_user_account` asegurando borrado en cascada |
 | `joinSharedGroup(groupId)` | Une al usuario actual a un grupo compartido mediante su UUID |
 | `syncExpense(expense)` | Sincroniza gasto personal en la tabla `user_expenses` si está autenticado |
 | `deleteExpense(expenseId)` | Elimina el gasto en el backup de Supabase si está autenticado |
@@ -130,7 +133,7 @@ Archivo: `lib/data/supabase_repository.dart`
 
 | Módulo | Archivo | Propósito |
 |---|---|---|
-| **WelcomeScreen** | `welcome_screen.dart` | Auth (Login/Registro Email), selector de moneda global, Ajustes y Accesibilidad. Permite usar toda la app sin registrarse. |
+| **WelcomeScreen** | `welcome_screen.dart` | Auth (Login/Registro Email y Google), selector de moneda global, Ajustes y Accesibilidad. Permite usar toda la app sin registrarse. |
 | **Gestión de Gastos** | `expenses_screen.dart` | Escaneo local de tickets (ML Kit), gastos manuales, categorías, selección rápida por carrusel de burbujas, persistencia SQLite y backup Supabase. |
 | **Gastos Compartidos** | `shared_expenses_screen.dart` | Grupos/eventos colaborativos con liquidación inteligente de deudas. |
 | **Lista de la Compra** | `checklist_screen.dart` → `shopping_list_detail_screen.dart` | Multi-lista checklist con escaneo local de listas escritas por OCR, persistencia SQLite y backup Supabase. |
