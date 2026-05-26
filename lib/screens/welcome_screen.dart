@@ -146,16 +146,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     icon: Icons.text_increase,
                     color: Colors.teal,
                     title: 'Tamaño Texto',
-                    child: SizedBox(
-                      width: 140,
-                      child: Slider(
-                        value: settings.textScaleFactor,
-                        min: 1.0,
-                        max: 1.5,
-                        divisions: 5,
-                        label: '${settings.textScaleFactor}',
-                        onChanged: (v) { settings.setTextScaleFactor(v); },
-                      ),
+                    child: Slider(
+                      value: settings.textScaleFactor,
+                      min: 1.0,
+                      max: 1.5,
+                      divisions: 5,
+                      label: '${settings.textScaleFactor}',
+                      onChanged: (v) { settings.setTextScaleFactor(v); },
                     ),
                   ),
                   _buildCenteredSetting(context,
@@ -525,9 +522,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       }
                     },
                     icon: Icon(isLogged ? Icons.logout : Icons.cloud_sync_rounded),
-                    label: Text(
-                      isLogged ? 'Cerrar Sesión' : 'Iniciar Sesión / Registrarse', 
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        isLogged ? 'Cerrar Sesión' : 'Iniciar Sesión / Registrarse', 
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isLogged ? Colors.red.shade50 : Theme.of(context).colorScheme.primary,
@@ -752,17 +752,33 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      SupabaseRepository.isAuthenticated ? Icons.person_rounded : Icons.person_outline, 
-                      color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : Colors.white70, 
-                      size: 30
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.05),
                     ),
-                    onPressed: _showProfileDialog,
+                    child: IconButton(
+                      icon: Icon(
+                        SupabaseRepository.isAuthenticated ? Icons.person_rounded : Icons.person_outline, 
+                        color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : Colors.white70, 
+                        size: 24
+                      ),
+                      onPressed: _showProfileDialog,
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 30),
-                    onPressed: _showSettingsDialog,
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.05),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 24),
+                      onPressed: _showSettingsDialog,
+                    ),
                   ),
                 ],
               ),
@@ -784,23 +800,27 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           border: Border.all(color: Colors.grey.withOpacity(0.1)),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-                const SizedBox(width: 16),
-                Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)),
-              ],
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
             ),
-            child,
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 3,
+              child: Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87), overflow: TextOverflow.ellipsis),
+            ),
+            Expanded(
+              flex: 4,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: child,
+              ),
+            ),
           ],
         ),
       ),

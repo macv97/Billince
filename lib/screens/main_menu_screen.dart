@@ -55,22 +55,27 @@ class MainMenuScreen extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
               onTap: () => _showProfileSheet(context),
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981).withOpacity(0.2) : colorScheme.primary.withOpacity(0.15),
-                    radius: 18,
-                    child: Icon(Icons.person_rounded, color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : colorScheme.primary, size: 20),
-                  ),
-                  if (SupabaseRepository.isAuthenticated)
-                    Positioned(
-                      right: 0, bottom: 0,
-                      child: Container(
-                        width: 10, height: 10,
-                        decoration: BoxDecoration(color: const Color(0xFF10B981), shape: BoxShape.circle, border: Border.all(color: colorScheme.surface, width: 2)),
-                      ),
-                    )
-                ],
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981).withOpacity(0.2) : colorScheme.primary.withOpacity(0.15),
+                      radius: 18,
+                      child: Icon(Icons.person_rounded, color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : colorScheme.primary, size: 20),
+                    ),
+                    if (SupabaseRepository.isAuthenticated)
+                      Positioned(
+                        right: 0, bottom: 0,
+                        child: Container(
+                          width: 10, height: 10,
+                          decoration: BoxDecoration(color: const Color(0xFF10B981), shape: BoxShape.circle, border: Border.all(color: colorScheme.surface, width: 2)),
+                        ),
+                      )
+                  ],
+                ),
               ),
             ),
           ),
@@ -82,15 +87,7 @@ class MainMenuScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Tus finanzas,',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Theme.of(context).brightness == Brightness.dark ? colorScheme.onSurface : colorScheme.primary, height: 1.1),
-              ),
-              Text(
-                'bajo control experto.',
-                style: TextStyle(fontSize: 22, color: Theme.of(context).brightness == Brightness.dark ? colorScheme.onSurfaceVariant : Colors.blueGrey.shade400, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
               GridView.count(
                 crossAxisCount: 2,
@@ -251,23 +248,27 @@ class MainMenuScreen extends StatelessWidget {
           border: Border.all(color: Colors.grey.withOpacity(0.1)),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-                const SizedBox(width: 16),
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-              ],
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
             ),
-            child,
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 3,
+              child: Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87), overflow: TextOverflow.ellipsis),
+            ),
+            Expanded(
+              flex: 4,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: child,
+              ),
+            ),
           ],
         ),
       ),
@@ -362,16 +363,13 @@ class MainMenuScreen extends StatelessWidget {
                     icon: Icons.text_increase,
                     color: Colors.teal,
                     title: 'Tamaño Texto',
-                    child: SizedBox(
-                      width: 140,
-                      child: Slider(
-                        value: settings.textScaleFactor,
-                        min: 1.0,
-                        max: 1.5,
-                        divisions: 5,
-                        label: '${settings.textScaleFactor}',
-                        onChanged: (v) { settings.setTextScaleFactor(v); },
-                      ),
+                    child: Slider(
+                      value: settings.textScaleFactor,
+                      min: 1.0,
+                      max: 1.5,
+                      divisions: 5,
+                      label: '${settings.textScaleFactor}',
+                      onChanged: (v) { settings.setTextScaleFactor(v); },
                     ),
                   ),
                   _buildCenteredSetting(context,
