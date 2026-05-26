@@ -80,15 +80,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     child: DropdownButton<String>(
                       value: settings.language,
                       underline: const SizedBox(),
-                      alignment: Alignment.center,
+                      alignment: Alignment.centerRight,
                       items: const [
-                        DropdownMenuItem(value: 'es', child: Text('Español')),
-                        DropdownMenuItem(value: 'en', child: Text('English')),
+                        DropdownMenuItem(value: 'es', child: Text('Español', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: 'en', child: Text('English', style: TextStyle(fontWeight: FontWeight.w500))),
                       ],
                       onChanged: (v) { if (v != null) settings.setLanguage(v); },
                     ),
                   ),
-                  const SizedBox(height: 16),
                   _buildCenteredSetting(
                     icon: Icons.dark_mode,
                     color: Colors.indigo,
@@ -96,16 +95,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     child: DropdownButton<ThemeMode>(
                       value: settings.themeMode,
                       underline: const SizedBox(),
-                      alignment: Alignment.center,
+                      alignment: Alignment.centerRight,
                       items: const [
-                        DropdownMenuItem(value: ThemeMode.system, child: Text('Automático')),
-                        DropdownMenuItem(value: ThemeMode.light, child: Text('Claro')),
-                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
+                        DropdownMenuItem(value: ThemeMode.system, child: Text('Auto', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: ThemeMode.light, child: Text('Claro', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro', style: TextStyle(fontWeight: FontWeight.w500))),
                       ],
                       onChanged: (v) { if (v != null) settings.setThemeMode(v); },
                     ),
                   ),
-                  const SizedBox(height: 16),
                   _buildCenteredSetting(
                     icon: Icons.color_lens,
                     color: Colors.orange,
@@ -113,49 +111,66 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     child: DropdownButton<int>(
                       value: settings.interfaceColor.value,
                       underline: const SizedBox(),
-                      alignment: Alignment.center,
+                      alignment: Alignment.centerRight,
                       items: const [
-                        DropdownMenuItem(value: 0xFF0F172A, child: Text('Midnight Blue')),
-                        DropdownMenuItem(value: 0xFF4B0082, child: Text('Indigo')),
-                        DropdownMenuItem(value: 0xFF800000, child: Text('Maroon')),
-                        DropdownMenuItem(value: 0xFF2F4F4F, child: Text('Slate Gray')),
+                        DropdownMenuItem(value: 0xFF0F172A, child: Text('Midnight', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: 0xFF4B0082, child: Text('Indigo', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: 0xFF800000, child: Text('Maroon', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: 0xFF2F4F4F, child: Text('Slate', style: TextStyle(fontWeight: FontWeight.w500))),
                       ],
                       onChanged: (v) { if (v != null) settings.setInterfaceColor(Color(v)); },
                     ),
                   ),
-                  const Divider(height: 32),
-                  const Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal), textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 24, bottom: 12),
+                    child: Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal), textAlign: TextAlign.center),
+                  ),
                   _buildCenteredSetting(
                     icon: Icons.visibility,
                     color: Colors.teal,
-                    title: 'Modo Daltonismo',
+                    title: 'Daltonismo',
                     child: DropdownButton<ColorBlindnessMode>(
                       value: settings.colorBlindnessMode,
                       underline: const SizedBox(),
-                      alignment: Alignment.center,
+                      alignment: Alignment.centerRight,
                       items: const [
-                        DropdownMenuItem(value: ColorBlindnessMode.none, child: Text('Desactivado')),
-                        DropdownMenuItem(value: ColorBlindnessMode.protanopia, child: Text('Protanopia')),
-                        DropdownMenuItem(value: ColorBlindnessMode.deuteranopia, child: Text('Deuteranopia')),
-                        DropdownMenuItem(value: ColorBlindnessMode.tritanopia, child: Text('Tritanopia')),
+                        DropdownMenuItem(value: ColorBlindnessMode.none, child: Text('No', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: ColorBlindnessMode.protanopia, child: Text('Protanopia', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: ColorBlindnessMode.deuteranopia, child: Text('Deuteranopia', style: TextStyle(fontWeight: FontWeight.w500))),
+                        DropdownMenuItem(value: ColorBlindnessMode.tritanopia, child: Text('Tritanopia', style: TextStyle(fontWeight: FontWeight.w500))),
                       ],
                       onChanged: (v) { if (v != null) settings.setColorBlindnessMode(v); },
                     ),
                   ),
-                  const SizedBox(height: 16),
                   _buildCenteredSetting(
                     icon: Icons.text_increase,
                     color: Colors.teal,
-                    title: 'Tamaño de Texto',
-                    child: Slider(
-                      value: settings.textScaleFactor,
-                      min: 1.0,
-                      max: 1.5,
-                      divisions: 5,
-                      label: '${settings.textScaleFactor}',
-                      onChanged: (v) { settings.setTextScaleFactor(v); },
+                    title: 'Tamaño Texto',
+                    child: SizedBox(
+                      width: 140,
+                      child: Slider(
+                        value: settings.textScaleFactor,
+                        min: 1.0,
+                        max: 1.5,
+                        divisions: 5,
+                        label: '${settings.textScaleFactor}',
+                        onChanged: (v) { settings.setTextScaleFactor(v); },
+                      ),
                     ),
+                  ),
+                  _buildCenteredSetting(
+                    icon: Icons.fingerprint,
+                    color: Colors.teal,
+                    title: 'Huella Dactilar',
+                    child: Switch(
+                      value: settings.useBiometrics,
+                      onChanged: (v) { settings.setUseBiometrics(v); },
+                      activeColor: Colors.teal,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Text('Nota: Los cambios fuera de línea pueden tardar en sincronizarse.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -662,13 +677,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             blurRadius: 30,
                             spreadRadius: 10,
                           )
-                        ]
-                      ),
-                      child: const Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(Icons.visibility, size: 80, color: Color(0xFF0F172A)), // Vision/Lynx Eye
                         ],
+                        image: const DecorationImage(
+                          image: AssetImage('assets/icon.png'),
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -680,16 +693,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                         letterSpacing: 2.0,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Tu control de gastos, simple y claro',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.blueGrey.shade300,
-                        letterSpacing: 0.5,
                       ),
                     ),
                     
@@ -728,6 +731,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             },
                             child: const Text('Continuar sin iniciar sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'En modo invitado los datos solo se guardarán localmente en este dispositivo. Inicia sesión para disponer de copia de seguridad en la nube y acceder a eventos compartidos.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: Colors.white54, height: 1.4),
+                          ),
                         ],
                       ),
                     ),
@@ -765,19 +774,36 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget _buildCenteredSetting({required IconData icon, required Color color, required String title, required Widget child}) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 16),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)),
+              ],
+            ),
+            child,
           ],
         ),
-        const SizedBox(height: 8),
-        child,
-      ],
+      ),
     );
   }
 }
