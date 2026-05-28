@@ -349,29 +349,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     return;
                                   }
                                 }
-                                if (mounted) {
-                                  // Recargar datos de la nube tras login
-                                  try {
-                                    final cloudGroups = await SupabaseRepository.fetchUserGroups();
-                                    AppData.sharedGroups.clear();
-                                    AppData.sharedGroups.addAll(cloudGroups);
-                                    
-                                    final cloudChecklists = await SupabaseRepository.fetchUserSharedChecklists();
-                                    AppData.sharedChecklists.clear();
-                                    AppData.sharedChecklists.addAll(cloudChecklists);
-                                    
-                                    final cloudExpenses = await SupabaseRepository.fetchUserExpenses();
-                                    for (var ce in cloudExpenses) {
-                                      if (!AppData.expenses.any((e) => e.id == ce.id)) {
-                                        AppData.expenses.add(ce);
-                                      }
-                                    }
-                                    AppData.expenses.sort((a, b) => b.date.compareTo(a.date));
-                                  } catch (_) {}
-                                  
-                                  Navigator.pop(ctx);
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainMenuScreen()));
-                                }
+                                // La navegación y carga de datos la maneja onAuthStateChange en initState.
                               } catch (e) {
                                 final msg = e.toString();
                                 setModalState(() {
@@ -382,9 +360,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   } else {
                                     errorMessage = 'Ha ocurrido un error. Inténtalo de nuevo.';
                                   }
+                                  _isLoadingAuth = false;
                                 });
-                              } finally {
-                                setModalState(() => _isLoadingAuth = false);
                               }
                             },
                             child: Text(isLogin ? 'Entrar a mi cuenta' : 'Crear mi cuenta', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
@@ -399,9 +376,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               });
                               try {
                                 await SupabaseRepository.signInWithGoogle();
-                                if (mounted) {
-                                  Navigator.pop(ctx);
-                                }
                               } catch (e) {
                                 setModalState(() {
                                   if (e.toString().contains('sign_in_canceled') || e.toString().contains('cancelado')) {
@@ -753,8 +727,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.05),
@@ -769,8 +741,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                   ),
                   Container(
-                    width: 48,
-                    height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.05),
@@ -818,7 +788,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               flex: 4,
               child: Align(
                 alignment: Alignment.centerRight,
-                child: child,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: child,
+                ),
               ),
             ),
           ],

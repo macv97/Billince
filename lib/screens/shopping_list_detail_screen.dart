@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/checklist_item.dart';
 import '../data/local_database.dart';
 import '../services/ticket_scanner.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class ShoppingListDetailScreen extends StatefulWidget {
   final ShoppingList shoppingList;
@@ -158,6 +159,24 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     final pickedFile = await picker.pickImage(source: source, imageQuality: 90);
     if (pickedFile == null) return;
 
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Recortar lista',
+            toolbarColor: Theme.of(context).colorScheme.primary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        IOSUiSettings(
+          title: 'Recortar lista',
+        ),
+      ],
+    );
+
+    if (croppedFile == null) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -172,7 +191,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     );
 
     try {
-      final productNames = await TicketScanner.scanShoppingList(pickedFile.path);
+      final productNames = await TicketScanner.scanShoppingList(croppedFile.path);
 
       if (!mounted) return;
       Navigator.pop(context);

@@ -41,8 +41,8 @@ Como desarrollador principal de aplicaciones móviles con enfoque experto en **A
    → Opción: Continuar sin sesión (datos volátiles, funciones colaborativas y backup nube deshabilitadas).
 
 2. LISTA DE LA COMPRA
-   → El usuario crea una lista antes de ir a comprar.
-   → Añade productos manualmente o escaneando una foto de una lista escrita (100% Offline-First mediante OCR local).
+   → El usuario crea una lista antes de ir a comprar (personal o compartida).
+   → Añade productos manualmente o escaneando una foto de una lista escrita (100% Offline-First mediante OCR local, incluyendo paso de recorte interactivo con image_cropper para mayor precisión).
    → En el supermercado, va tachando los productos que compra.
    → ⚠️ NO se registra ningún importe aquí. Es solo un checklist.
 
@@ -136,9 +136,9 @@ Archivo: `lib/data/supabase_repository.dart`
 | **WelcomeScreen** | `welcome_screen.dart` | Auth (Login/Registro Email y Google), selector de moneda global, Ajustes y Accesibilidad. Permite usar toda la app sin registrarse. |
 | **Gestión de Gastos** | `expenses_screen.dart` | Escaneo local de tickets (ML Kit), gastos manuales, categorías, selección rápida por carrusel de burbujas, persistencia SQLite y backup Supabase. |
 | **Gastos Compartidos** | `shared_expenses_screen.dart` | Grupos/eventos colaborativos con liquidación inteligente de deudas. |
-| **Lista de la Compra** | `checklist_screen.dart` → `shopping_list_detail_screen.dart` | Multi-lista checklist con escaneo local de listas escritas por OCR, persistencia SQLite y backup Supabase. |
+| **Lista de la Compra** | `checklist_screen.dart`, `shopping_list_detail_screen.dart`, `shared_checklist_detail_screen.dart` | Multi-lista checklist (personal y compartida) con escaneo local por OCR + image_cropper, persistencia SQLite y backup Supabase. |
 | **Análisis de Compras** | `shopping_insights_screen.dart` | Lince IA Advisor con consejos automáticos generados localmente analizando patrones semanales y de consumo. |
-| **Resumen y Gráficos** | `summary_screen.dart` | Dashboard financiero con barras y desglose de gastos. |
+| **Resumen y Gráficos** | `summary_screen.dart` y `main_menu_screen.dart` | Dashboard financiero con barras, desglose de gastos y navegación vertical moderna de tarjetas anchas. |
 | **Calendario y Eventos** | `calendar_screen.dart` | Agenda personal con calendario mensual y categorías. |
 
 ---
@@ -170,6 +170,6 @@ La gestión de tareas y el roadmap activo se sincronizan y administran de forma 
 2. **Lectura Detallada de Tarjetas (Comentarios y Adjuntos):** Al iniciar cualquier tarea en **TODO**, el asistente debe inspeccionar obligatoriamente el interior de la tarjeta en Linear para comprobar si contiene comentarios, enlaces o imágenes que describan detalladamente la funcionalidad a implementar o el error a solucionar.
 3. **Ciclo de Vida Automatizado (Movimiento de Columnas):**
    - **In Progress:** Al iniciar el desarrollo de una tarea de la columna **TODO**, el asistente debe actualizar inmediatamente su estado en Linear a **In Progress** (`6c379fe3-2259-4e6d-bdb8-c000b3cb9826`).
-   - **Done:** Tras completar la implementación y pasar con éxito los tests/QA ("Dry-Run mental"), el asistente debe actualizar su estado en Linear a **Done** (`efc74b4f-26a2-4cff-9852-7a7c7854c76f`).
+   - **In Review:** Tras completar la implementación y pasar con éxito los tests/QA ("Dry-Run mental"), el asistente debe actualizar su estado en Linear a **In Review** (`1dd5016a-78d3-4609-acee-d5208d979fe3`) para que el usuario la valide.
 4. **Tablero Local:** La vista Kanban en `linear_board.md` debe regenerarse con el script `linear_generate_board.py` para reflejar el estado real de Linear.
 

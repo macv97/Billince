@@ -41,7 +41,7 @@ El roadmap, los bugs pendientes y el ciclo de desarrollo activo se gestionan ín
 ### 📋 Flujo de Trabajo del Asistente de IA
 - **Entrada (TODO):** El asistente monitorea activamente la columna **TODO** del tablero de Linear. Solo se implementan las tareas priorizadas en esta columna.
 - **Lectura Detallada:** Antes de codificar, el asistente inspecciona obligatoriamente los comentarios, adjuntos, enlaces e imágenes en el interior de cada tarjeta para capturar todas las especificaciones.
-- **Ciclo de Vida:** Las tareas se mueven automáticamente a **In Progress** durante el desarrollo y a **Done** tras una validación y testing exitosos.
+- **Ciclo de Vida:** Las tareas se mueven automáticamente a **In Progress** durante el desarrollo y a **In Review** tras una validación y testing exitosos para que el usuario las revise.
 - **Tablero Kanban:** Puedes ver e interactuar localmente con la vista del flujo de trabajo en [linear_board.md](file:///C:/Users/macv2/.gemini/antigravity-ide/brain/95a82b9c-0e26-42ee-94a1-b897398c35ab/linear_board.md), que se actualiza automáticamente con la API.
 
 

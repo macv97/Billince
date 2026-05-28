@@ -95,6 +95,7 @@ ALTER TABLE shared_checklists ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Shared checklists visibility" ON shared_checklists FOR SELECT USING (true);
 CREATE POLICY "Shared checklists insertion" ON shared_checklists FOR INSERT WITH CHECK (auth.uid() = created_by);
 CREATE POLICY "Anyone can update shared checklists" ON shared_checklists FOR UPDATE USING (true);
+CREATE POLICY "Creator can delete shared checklists" ON shared_checklists FOR DELETE USING (auth.uid() = created_by);
 
 -- 7. Miembros de las listas compartidas
 CREATE TABLE IF NOT EXISTS shared_checklist_members (
@@ -110,6 +111,7 @@ ALTER TABLE shared_checklist_members ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Shared list members visibility" ON shared_checklist_members FOR SELECT USING (true);
 CREATE POLICY "Anyone can join shared list" ON shared_checklist_members FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can update user id" ON shared_checklist_members FOR UPDATE USING (true);
+CREATE POLICY "Users can delete shared list members" ON shared_checklist_members FOR DELETE USING (true);
 
 -- 8. Productos de las listas compartidas
 CREATE TABLE IF NOT EXISTS shared_checklist_items (
@@ -158,3 +160,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- 11. Data API Grants (Supabase May 2026 Update)
+-- Explicit grants required for new tables in the "public" schema to be exposed to the Data API.
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.user_expenses TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.shared_groups TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.group_members TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.user_shopping_lists TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.user_checklist_items TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.shared_expenses TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.shared_checklists TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.shared_checklist_members TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.shared_checklist_items TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.shared_checklist_logs TO anon, authenticated, service_role;

@@ -478,7 +478,12 @@ class SupabaseRepository {
     final user = currentUser;
     if (user == null) return;
     try {
-      await client.from('shared_checklist_members').delete().eq('list_id', listId).eq('user_id', user.id);
+      final listCheck = await client.from('shared_checklists').select('created_by').eq('id', listId).maybeSingle();
+      if (listCheck != null && listCheck['created_by'] == user.id) {
+        await client.from('shared_checklists').delete().eq('id', listId);
+      } else {
+        await client.from('shared_checklist_members').delete().eq('list_id', listId).eq('user_id', user.id);
+      }
     } catch (e) {
       print("Error removing user from checklist: $e");
     }

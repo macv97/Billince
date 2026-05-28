@@ -7,6 +7,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import '../models/shared_checklist.dart';
 import '../data/supabase_repository.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import '../services/ticket_scanner.dart';
 
 class SharedChecklistDetailScreen extends StatefulWidget {
   final SharedChecklist checklist;
@@ -373,6 +376,148 @@ class _SharedChecklistDetailScreenState extends State<SharedChecklistDetailScree
     );
   }
 
+  void _showAddOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 50, height: 5, margin: const EdgeInsets.only(bottom: 24), decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
+              const Text('Añadir Producto', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                  child: const Icon(Icons.edit_rounded, color: Colors.blue),
+                ),
+                title: const Text('Escribir manualmente', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                subtitle: const Text('Escribe el nombre del producto'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showEditItemDialog();
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                  child: const Icon(Icons.camera_alt_rounded, color: Colors.amber),
+                ),
+                title: const Text('Escanear con cámara', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                subtitle: const Text('Haz una foto a una lista escrita'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _processImage(ImageSource.camera);
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                  child: const Icon(Icons.photo_library_rounded, color: Colors.green),
+                ),
+                title: const Text('Subir de galería', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                subtitle: const Text('Selecciona una foto de tu móvil'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _processImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _processImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 90);
+    if (pickedFile == null) return;
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Recortar lista',
+            toolbarColor: Theme.of(context).colorScheme.primary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        IOSUiSettings(
+          title: 'Recortar lista',
+        ),
+      ],
+    );
+
+    if (croppedFile == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: const Row(children: [
+          CircularProgressIndicator(),
+          SizedBox(width: 20),
+          Expanded(child: Text('Escaneando lista localmente...')),
+        ]),
+      ),
+    );
+
+    try {
+      final productNames = await TicketScanner.scanShoppingList(croppedFile.path);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      if (productNames.isNotEmpty) {
+        int addedCount = 0;
+        for (final name in productNames) {
+          final newItem = SharedChecklistItem(
+            id: const Uuid().v4(),
+            title: name,
+            isDone: false,
+            tags: [], 
+            addedBy: _checklist.myMemberName ?? 'Tú',
+            createdAt: DateTime.now(),
+          );
+
+          setState(() => _checklist.items.add(newItem));
+          await SupabaseRepository.syncSharedChecklistItem(_checklist.id, newItem);
+          addedCount++;
+        }
+        
+        await _addLog('Añadido', 'Escaneo: $addedCount productos');
+
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('¡$addedCount productos detectados!'),
+          backgroundColor: const Color(0xFF10B981),
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se detectaron productos.')));
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
@@ -582,10 +727,14 @@ class _SharedChecklistDetailScreenState extends State<SharedChecklistDetailScree
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showEditItemDialog(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddOptions,
         backgroundColor: colorScheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Añadir Elemento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
       ),
     );
   }

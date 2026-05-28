@@ -224,9 +224,15 @@ class _SharedChecklistsTabState extends State<SharedChecklistsTab> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.shopping_cart_outlined, size: 64, color: primaryColor.withOpacity(0.5)),
-                      const SizedBox(height: 16),
-                      const Text('Sin listas compartidas', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), shape: BoxShape.circle),
+                        child: Icon(Icons.shopping_basket_rounded, size: 64, color: primaryColor.withOpacity(0.5)),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text('Sin listas', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text('Crea tu primera lista de compras.', style: TextStyle(fontSize: 16, color: Colors.blueGrey.shade400)),
                     ],
                   ),
                 ),

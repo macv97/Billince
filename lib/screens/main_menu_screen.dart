@@ -89,42 +89,36 @@ class MainMenuScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 16),
 
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 0.85,
+              Column(
                 children: [
-                  _buildGridCard(
+                  _buildListCard(
                     context,
-                    title: 'Gastos',
-                    subtitle: '',
+                    title: 'Mis gastos e ingresos',
+                    subtitle: 'Registra gastos, ingresos personales',
                     icon: Icons.receipt_long_rounded,
                     color: const Color(0xFF3B82F6), // Blue
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen())),
                   ),
-                  _buildGridCard(
+                  _buildListCard(
                     context,
-                    title: 'Listas',
-                    subtitle: '',
+                    title: 'Mis listas',
+                    subtitle: 'Crea listas personales o compartidas',
                     icon: Icons.shopping_cart_rounded,
                     color: const Color(0xFF0D9488), // Teal
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChecklistScreen())),
                   ),
-                  _buildGridCard(
+                  _buildListCard(
                     context,
-                    title: 'Eventos',
-                    subtitle: '',
+                    title: 'Mis eventos',
+                    subtitle: 'Organiza tus grupos y eventos',
                     icon: Icons.group_rounded,
                     color: const Color(0xFFF59E0B), // Amber
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharedExpensesScreen())),
                   ),
-                  _buildGridCard(
+                  _buildListCard(
                     context,
-                    title: 'Analíticas',
-                    subtitle: '',
+                    title: 'Resumen general',
+                    subtitle: 'Analiza tus movimientos',
                     icon: Icons.insights_rounded,
                     color: const Color(0xFF8B5CF6), // Purple
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SummaryScreen())),
@@ -135,39 +129,59 @@ class MainMenuScreen extends StatelessWidget {
               const SizedBox(height: 16),
               
               // Wide card for calendar
-              Card(
-                elevation: 4,
-                shadowColor: colorScheme.primary.withOpacity(0.2),
-                color: colorScheme.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                child: InkWell(
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarScreen())),
-                  borderRadius: BorderRadius.circular(24),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(16),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.primary.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8), spreadRadius: -2)
+                  ]
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarScreen())),
+                    borderRadius: BorderRadius.circular(28),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Icon(Icons.calendar_month_rounded, size: 34, color: Colors.white),
                           ),
-                          child: const Icon(Icons.calendar_month_rounded, size: 32, color: Colors.white),
-                        ),
-                        const SizedBox(width: 20),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Calendario', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                              SizedBox(height: 4),
-                              Text('Eventos y vencimientos', style: TextStyle(fontSize: 14, color: Colors.white70)),
-                            ],
+                          const SizedBox(width: 20),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Calendario', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+                                SizedBox(height: 4),
+                                Text('Eventos y vencimientos', style: TextStyle(fontSize: 15, color: Colors.white70, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 20),
-                      ],
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -180,7 +194,7 @@ class MainMenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGridCard(BuildContext context, {
+  Widget _buildListCard(BuildContext context, {
     required String title,
     required String subtitle,
     required IconData icon,
@@ -188,46 +202,80 @@ class MainMenuScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? Theme.of(context).cardColor : Colors.white;
-    final borderColor = isDark ? Colors.white.withOpacity(0.1) : color.withOpacity(0.1);
+    
+    final bgColor = isDark 
+      ? Theme.of(context).cardColor.withOpacity(0.8) 
+      : Colors.white;
 
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: borderColor, width: 1.5),
-        boxShadow: isDark ? [] : [
-          BoxShadow(color: color.withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 6))
-        ],
+        border: Border.all(
+          color: isDark ? color.withOpacity(0.15) : color.withOpacity(0.1), 
+          width: 1.5
+        ),
+        boxShadow: isDark 
+          ? [BoxShadow(color: color.withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 8))] 
+          : [BoxShadow(color: color.withOpacity(0.12), blurRadius: 24, spreadRadius: -4, offset: const Offset(0, 12))],
+        gradient: isDark 
+          ? LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.05),
+                Colors.transparent,
+              ],
+            )
+          : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(24),
+          highlightColor: color.withOpacity(0.1),
+          splashColor: color.withOpacity(0.2),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(icon, size: 28, color: color),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.primary)),
-                    if (subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(subtitle, style: TextStyle(fontSize: 13, color: isDark ? Theme.of(context).colorScheme.onSurfaceVariant : Colors.blueGrey.shade400, fontWeight: FontWeight.w600)),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withOpacity(0.25),
+                        color.withOpacity(0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(color: color.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))
                     ]
-                  ],
+                  ),
+                  child: Icon(icon, size: 30, color: isDark ? color.withOpacity(0.9) : color),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A), letterSpacing: -0.5)),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(subtitle, style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.blueGrey.shade400, fontWeight: FontWeight.w500)),
+                      ]
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: isDark ? color.withOpacity(0.1) : Colors.grey.shade100, shape: BoxShape.circle),
+                  child: Icon(Icons.arrow_forward_ios_rounded, color: isDark ? color.withOpacity(0.7) : Colors.grey.shade400, size: 16),
                 ),
               ],
             ),
@@ -266,7 +314,11 @@ class MainMenuScreen extends StatelessWidget {
               flex: 4,
               child: Align(
                 alignment: Alignment.centerRight,
-                child: child,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: child,
+                ),
               ),
             ),
           ],
