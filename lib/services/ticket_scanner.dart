@@ -198,19 +198,92 @@ class TicketScanner {
     }
   }
 
+  /// Delimiter characters that indicate item separation in a single line.
+  static final _itemDelimiters = RegExp(r'\s*[,;/]\s*');
+  /// Period as delimiter: only when between words (not after a digit like "1.")
+  static final _periodDelimiter = RegExp(r'(?<=[a-zA-ZáéíóúñÁÉÍÓÚÑ])\s*\.\s+');
+  /// Hyphen as delimiter: only when surrounded by word chars (not bullet "-Leche")
+  static final _hyphenDelimiter = RegExp(r'(?<=\S)\s+-\s+(?=\S)');
+  /// Bullet / list markers at the start of a fragment
+  static final _bulletPrefix = RegExp(r'^[\s•●○◦▪▸►☐☑✓✗✔\-–—*»›]+\s*');
+  /// Ordinal prefix: "1.", "2)", "3-", etc.
+  static final _ordinalPrefix = RegExp(r'^\d{1,3}[\.\)\-]\s*');
+  /// Noise headers commonly found above shopping lists
+  static final _noiseHeaders = [
+    'lista', 'compra', 'supermercado', 'mercado', 'shopping',
+    'compras', 'nota', 'notas', 'lista de la compra', 'lista de compra',
+  ];
+  /// Price pattern (more aggressive for list cleaning)
+  static final _listPriceRegex = RegExp(r'\d+[\.,]\d{1,2}\s*[€$£]?|[€$£]\s*\d+[\.,]?\d*|\d+\s*[€$£]');
+  /// Noise-only lines: dates, decorative chars, very short garbage
+  static final _noiseLine = RegExp(r'^[\d\s\-/\.,:;!?¿¡#@&%=+*~`´^°|\\<>(){}\[\]]+$');
+
+  /// Scans a shopping list image 100% locally. Splits text by common
+  /// delimiter characters (`,` `.` `;` `/` `-`) so that a line like
+  /// "Pan, pilas, aceite, coco" produces 4 separate items.
   static Future<List<String>> scanShoppingList(String imagePath) async {
     final inputImage = InputImage.fromFilePath(imagePath);
     final textRecognizer = TextRecognizer();
     try {
       final recognizedText = await textRecognizer.processImage(inputImage);
       final lines = _groupIntoHorizontalLines(recognizedText);
-      return lines
-          .map((l) => l.text.replaceAll(RegExp(r'[\d.,]+\s*(€|\$|£)?'), '').trim())
-          .where((text) => text.length >= 2)
-          .toList();
+
+      final items = <String>[];
+      final seen = <String>{}; // lowercase dedup set
+
+      for (final line in lines) {
+        // 1. Split by unambiguous delimiters (, ; /)
+        List<String> fragments = line.text.split(_itemDelimiters);
+        
+        // 2. Further split each fragment by period-as-delimiter and hyphen-as-delimiter
+        final expanded = <String>[];
+        for (final frag in fragments) {
+          final byPeriod = frag.split(_periodDelimiter);
+          for (final sub in byPeriod) {
+            expanded.addAll(sub.split(_hyphenDelimiter));
+          }
+        }
+
+        for (final raw in expanded) {
+          String cleaned = raw
+              .replaceAll(_listPriceRegex, '')   // Remove prices
+              .replaceAll(_bulletPrefix, '')       // Remove bullet markers
+              .replaceAll(_ordinalPrefix, '')      // Remove ordinal prefixes
+              .replaceAll(RegExp(r'[\d]{5,}'), '') // Remove barcodes / long numbers
+              .trim();
+
+          // Skip noise
+          if (cleaned.length < 2) continue;
+          if (_noiseLine.hasMatch(cleaned)) continue;
+          if (_noiseHeaders.contains(cleaned.toLowerCase())) continue;
+
+          // Normalize to Title Case
+          cleaned = _toTitleCase(cleaned);
+
+          // Deduplicate (case-insensitive)
+          final key = cleaned.toLowerCase();
+          if (seen.contains(key)) continue;
+          seen.add(key);
+
+          items.add(cleaned);
+        }
+      }
+
+      debugPrint('[TicketScanner] Shopping list OCR -> ${items.length} items: $items');
+      return items;
     } finally {
       textRecognizer.close();
     }
+  }
+
+  /// Converts a string to Title Case: first letter uppercase, rest lowercase.
+  static String _toTitleCase(String input) {
+    if (input.isEmpty) return input;
+    final words = input.split(RegExp(r'\s+'));
+    return words.map((w) {
+      if (w.isEmpty) return w;
+      return w[0].toUpperCase() + w.substring(1).toLowerCase();
+    }).join(' ');
   }
 
   // ── Advanced Processing Helpers ─────────────────────────────────────────

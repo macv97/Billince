@@ -257,70 +257,152 @@ class _SharedChecklistDetailScreenState extends State<SharedChecklistDetailScree
     if (mounted) setState(() {});
   }
 
+  /// Collects all unique tags already used in this checklist (canonical source of truth).
+  Set<String> _getExistingTags() {
+    final tags = <String>{};
+    for (final item in _checklist.items) {
+      tags.addAll(item.tags);
+    }
+    return tags;
+  }
+
   void _showEditItemDialog({SharedChecklistItem? existingItem}) {
     final titleController = TextEditingController(text: existingItem?.title ?? '');
-    final tagController = TextEditingController(text: existingItem?.tags.join(', ') ?? '');
+    final newTagController = TextEditingController();
+    final selectedTags = <String>{...?existingItem?.tags};
+    final existingTags = _getExistingTags();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(existingItem == null ? 'Añadir producto' : 'Editar producto'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              autofocus: existingItem == null,
-              decoration: const InputDecoration(labelText: 'Producto (ej. Huevos)'),
-              textCapitalization: TextCapitalization.sentences,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          // Merge existing checklist tags + any currently selected (covers edge case of editing)
+          final allTags = {...existingTags, ...selectedTags};
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(existingItem == null ? 'Añadir producto' : 'Editar producto'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    autofocus: existingItem == null,
+                    decoration: const InputDecoration(labelText: 'Producto (ej. Huevos)'),
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Etiqueta', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  if (allTags.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: allTags.map((tag) {
+                        final isSelected = selectedTags.contains(tag);
+                        return FilterChip(
+                          label: Text(tag),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setDialogState(() {
+                              if (selected) {
+                                selectedTags.clear(); // Only 1 tag at a time
+                                selectedTags.add(tag);
+                              } else {
+                                selectedTags.remove(tag);
+                              }
+                            });
+                          },
+                          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                          checkmarkColor: Theme.of(context).colorScheme.primary,
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: newTagController,
+                          decoration: InputDecoration(
+                            labelText: 'Crear nueva etiqueta',
+                            isDense: true,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          textCapitalization: TextCapitalization.sentences,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(Icons.add_circle_rounded, color: Theme.of(context).colorScheme.primary),
+                        onPressed: () {
+                          final newTag = newTagController.text.trim();
+                          if (newTag.isEmpty) return;
+                          // Check for case-insensitive duplicate
+                          final existing = allTags.cast<String?>().firstWhere(
+                            (t) => t!.toLowerCase() == newTag.toLowerCase(),
+                            orElse: () => null,
+                          );
+                          setDialogState(() {
+                            selectedTags.clear();
+                            if (existing != null) {
+                              // Use existing casing instead of creating duplicate
+                              selectedTags.add(existing);
+                            } else {
+                              selectedTags.add(newTag);
+                              existingTags.add(newTag); // Register for future chips
+                            }
+                          });
+                          newTagController.clear();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: tagController,
-              decoration: const InputDecoration(labelText: 'Etiqueta (ej. Desayuno, Cenas)'),
-              textCapitalization: TextCapitalization.sentences,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final title = titleController.text.trim();
-              if (title.isEmpty) return;
-              
-              final tagText = tagController.text.trim();
-              final tags = tagText.isEmpty ? <String>[] : [tagText];
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+              ElevatedButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  if (title.isEmpty) return;
+                  
+                  final tags = selectedTags.toList();
 
-              if (existingItem != null) {
-                final oldTitle = existingItem.title;
-                setState(() {
-                  existingItem.title = title;
-                  existingItem.tags = tags;
-                });
-                Navigator.pop(context);
-                await SupabaseRepository.syncSharedChecklistItem(_checklist.id, existingItem);
-                await _addLog('Editado', '$oldTitle -> $title');
-              } else {
-                final newItem = SharedChecklistItem(
-                  id: const Uuid().v4(),
-                  title: title,
-                  isDone: false,
-                  tags: tags,
-                  addedBy: _checklist.myMemberName ?? 'Tú',
-                  createdAt: DateTime.now(),
-                );
+                  if (existingItem != null) {
+                    final oldTitle = existingItem.title;
+                    setState(() {
+                      existingItem.title = title;
+                      existingItem.tags = tags;
+                    });
+                    Navigator.pop(context);
+                    await SupabaseRepository.syncSharedChecklistItem(_checklist.id, existingItem);
+                    await _addLog('Editado', '$oldTitle -> $title');
+                  } else {
+                    final newItem = SharedChecklistItem(
+                      id: const Uuid().v4(),
+                      title: title,
+                      isDone: false,
+                      tags: tags,
+                      addedBy: _checklist.myMemberName ?? 'Tú',
+                      createdAt: DateTime.now(),
+                    );
 
-                setState(() => _checklist.items.add(newItem));
-                Navigator.pop(context);
+                    setState(() => _checklist.items.add(newItem));
+                    Navigator.pop(context);
 
-                await SupabaseRepository.syncSharedChecklistItem(_checklist.id, newItem);
-                await _addLog('Añadido', newItem.title);
-              }
-            },
-            child: Text(existingItem == null ? 'Añadir' : 'Guardar'),
-          ),
-        ],
+                    await SupabaseRepository.syncSharedChecklistItem(_checklist.id, newItem);
+                    await _addLog('Añadido', newItem.title);
+                  }
+                },
+                child: Text(existingItem == null ? 'Añadir' : 'Guardar'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
