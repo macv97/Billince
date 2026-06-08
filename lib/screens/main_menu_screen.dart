@@ -9,6 +9,7 @@ import '../data/settings_provider.dart';
 import '../data/app_data.dart';
 import '../data/supabase_repository.dart';
 import 'welcome_screen.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
@@ -47,7 +48,7 @@ class MainMenuScreen extends StatelessWidget {
         iconTheme: IconThemeData(color: colorScheme.primary),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(LucideIcons.settings, size: 24),
             onPressed: () => _showSettingsDialog(context),
           ),
           Padding(
@@ -62,9 +63,9 @@ class MainMenuScreen extends StatelessWidget {
                   clipBehavior: Clip.none,
                   children: [
                     CircleAvatar(
-                      backgroundColor: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981).withOpacity(0.2) : colorScheme.primary.withOpacity(0.15),
+                      backgroundColor: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981).withOpacity(0.15) : colorScheme.primary.withOpacity(0.1),
                       radius: 18,
-                      child: Icon(Icons.person_rounded, color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : colorScheme.primary, size: 20),
+                      child: Icon(LucideIcons.user, color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : colorScheme.primary, size: 20),
                     ),
                     if (SupabaseRepository.isAuthenticated)
                       Positioned(
@@ -94,32 +95,32 @@ class MainMenuScreen extends StatelessWidget {
                   _buildListCard(
                     context,
                     title: 'Mis gastos e ingresos',
-                    subtitle: 'Registra gastos, ingresos personales',
-                    icon: Icons.receipt_long_rounded,
+                    subtitle: 'Registra movimientos',
+                    icon: LucideIcons.wallet,
                     color: const Color(0xFF3B82F6), // Blue
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen())),
                   ),
                   _buildListCard(
                     context,
                     title: 'Mis listas',
-                    subtitle: 'Crea listas personales o compartidas',
-                    icon: Icons.shopping_cart_rounded,
+                    subtitle: 'Crea listas de la compra',
+                    icon: LucideIcons.shoppingBag,
                     color: const Color(0xFF0D9488), // Teal
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChecklistScreen())),
                   ),
                   _buildListCard(
                     context,
                     title: 'Mis eventos',
-                    subtitle: 'Organiza tus grupos y eventos',
-                    icon: Icons.group_rounded,
+                    subtitle: 'Gastos en grupos',
+                    icon: LucideIcons.users,
                     color: const Color(0xFFF59E0B), // Amber
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharedExpensesScreen())),
                   ),
                   _buildListCard(
                     context,
                     title: 'Resumen general',
-                    subtitle: 'Analiza tus movimientos',
-                    icon: Icons.insights_rounded,
+                    subtitle: 'Analiza movimientos',
+                    icon: LucideIcons.pieChart,
                     color: const Color(0xFF8B5CF6), // Purple
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SummaryScreen())),
                   ),
@@ -159,7 +160,7 @@ class MainMenuScreen extends StatelessWidget {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(Icons.calendar_month_rounded, size: 34, color: Colors.white),
+                            child: const Icon(LucideIcons.calendarDays, size: 34, color: Colors.white),
                           ),
                           const SizedBox(width: 20),
                           const Expanded(
@@ -178,7 +179,7 @@ class MainMenuScreen extends StatelessWidget {
                               color: Colors.white.withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
+                            child: const Icon(LucideIcons.chevronRight, color: Colors.white, size: 18),
                           ),
                         ],
                       ),
@@ -204,79 +205,55 @@ class MainMenuScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     final bgColor = isDark 
-      ? Theme.of(context).cardColor.withOpacity(0.8) 
+      ? Theme.of(context).cardColor.withOpacity(0.5) 
       : Colors.white;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? color.withOpacity(0.15) : color.withOpacity(0.1), 
-          width: 1.5
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03), 
+          width: 1
         ),
         boxShadow: isDark 
-          ? [BoxShadow(color: color.withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 8))] 
-          : [BoxShadow(color: color.withOpacity(0.12), blurRadius: 24, spreadRadius: -4, offset: const Offset(0, 12))],
-        gradient: isDark 
-          ? LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.05),
-                Colors.transparent,
-              ],
-            )
-          : null,
+          ? [] 
+          : [BoxShadow(color: color.withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 8))],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          highlightColor: color.withOpacity(0.1),
-          splashColor: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+          highlightColor: color.withOpacity(0.05),
+          splashColor: color.withOpacity(0.1),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        color.withOpacity(0.25),
-                        color.withOpacity(0.1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(color: color.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))
-                    ]
+                    color: isDark ? color.withOpacity(0.15) : color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(icon, size: 30, color: isDark ? color.withOpacity(0.9) : color),
+                  child: Icon(icon, size: 28, color: isDark ? color.withOpacity(0.9) : color),
                 ),
                 const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A), letterSpacing: -0.5)),
+                      Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A), letterSpacing: -0.3)),
                       if (subtitle.isNotEmpty) ...[
                         const SizedBox(height: 4),
-                        Text(subtitle, style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.blueGrey.shade400, fontWeight: FontWeight.w500)),
+                        Text(subtitle, style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.blueGrey.shade400, fontWeight: FontWeight.w400)),
                       ]
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: isDark ? color.withOpacity(0.1) : Colors.grey.shade100, shape: BoxShape.circle),
-                  child: Icon(Icons.arrow_forward_ios_rounded, color: isDark ? color.withOpacity(0.7) : Colors.grey.shade400, size: 16),
-                ),
+                Icon(LucideIcons.chevronRight, color: isDark ? Colors.white24 : Colors.grey.shade300, size: 20),
               ],
             ),
           ),
@@ -340,10 +317,10 @@ class MainMenuScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700), textAlign: TextAlign.center),
                   const SizedBox(height: 24),
                   _buildCenteredSetting(context,
-                    icon: Icons.language,
+                    icon: LucideIcons.globe,
                     color: Colors.blueGrey,
                     title: 'Idioma',
                     child: DropdownButton<String>(
@@ -358,7 +335,7 @@ class MainMenuScreen extends StatelessWidget {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.dark_mode,
+                    icon: LucideIcons.moon,
                     color: Colors.indigo,
                     title: 'Tema Visual',
                     child: DropdownButton<ThemeMode>(
@@ -374,7 +351,7 @@ class MainMenuScreen extends StatelessWidget {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.color_lens,
+                    icon: LucideIcons.palette,
                     color: Colors.orange,
                     title: 'Color Principal',
                     child: DropdownButton<int>(
@@ -392,10 +369,10 @@ class MainMenuScreen extends StatelessWidget {
                   ),
                   const Padding(
                     padding: EdgeInsets.only(top: 24, bottom: 12),
-                    child: Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal), textAlign: TextAlign.center),
+                    child: Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.teal), textAlign: TextAlign.center),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.visibility,
+                    icon: LucideIcons.eye,
                     color: Colors.teal,
                     title: 'Daltonismo',
                     child: DropdownButton<ColorBlindnessMode>(
@@ -412,7 +389,7 @@ class MainMenuScreen extends StatelessWidget {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.text_increase,
+                    icon: LucideIcons.type,
                     color: Colors.teal,
                     title: 'Tamaño Texto',
                     child: Slider(
@@ -425,7 +402,7 @@ class MainMenuScreen extends StatelessWidget {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.fingerprint,
+                    icon: LucideIcons.fingerprint,
                     color: Colors.teal,
                     title: 'Huella Dactilar',
                     child: Switch(
@@ -459,14 +436,14 @@ class MainMenuScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircleAvatar(
-                  backgroundColor: isLogged ? const Color(0xFF10B981).withOpacity(0.2) : Colors.blueGrey.withOpacity(0.2),
+                  backgroundColor: isLogged ? const Color(0xFF10B981).withOpacity(0.15) : Colors.blueGrey.withOpacity(0.1),
                   radius: 40,
-                  child: Icon(Icons.person_rounded, size: 40, color: isLogged ? const Color(0xFF10B981) : Colors.blueGrey),
+                  child: Icon(LucideIcons.user, size: 40, color: isLogged ? const Color(0xFF10B981) : Colors.blueGrey),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   isLogged ? 'Perfil Sincronizado' : 'Modo Offline',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -485,7 +462,7 @@ class MainMenuScreen extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    icon: Icon(isLogged ? Icons.logout : Icons.login),
+                    icon: Icon(isLogged ? LucideIcons.logOut : LucideIcons.logIn),
                     label: Text(isLogged ? 'Cerrar sesión' : 'Iniciar sesión / Registrarse'),
                     onPressed: () {
                       Navigator.pop(sheetCtx); // Close sheet
@@ -504,8 +481,8 @@ class MainMenuScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   TextButton.icon(
                     onPressed: () => _showDeleteAccountConfirmation(parentContext, sheetCtx),
-                    icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
-                    label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
+                    label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w700)),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),

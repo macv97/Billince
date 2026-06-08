@@ -6,6 +6,7 @@ import '../data/app_data.dart';
 import '../data/settings_provider.dart';
 import '../data/supabase_repository.dart';
 import 'main_menu_screen.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -71,10 +72,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const Text('Ajustes y Accesibilidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700), textAlign: TextAlign.center),
                   const SizedBox(height: 24),
                   _buildCenteredSetting(context,
-                    icon: Icons.language,
+                    icon: LucideIcons.globe,
                     color: Colors.blueGrey,
                     title: 'Idioma',
                     child: DropdownButton<String>(
@@ -89,7 +90,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.dark_mode,
+                    icon: LucideIcons.moon,
                     color: Colors.indigo,
                     title: 'Tema Visual',
                     child: DropdownButton<ThemeMode>(
@@ -105,7 +106,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.color_lens,
+                    icon: LucideIcons.palette,
                     color: Colors.orange,
                     title: 'Color Principal',
                     child: DropdownButton<int>(
@@ -123,10 +124,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   const Padding(
                     padding: EdgeInsets.only(top: 24, bottom: 12),
-                    child: Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal), textAlign: TextAlign.center),
+                    child: Text('Accesibilidad Visual', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.teal), textAlign: TextAlign.center),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.visibility,
+                    icon: LucideIcons.eye,
                     color: Colors.teal,
                     title: 'Daltonismo',
                     child: DropdownButton<ColorBlindnessMode>(
@@ -143,7 +144,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.text_increase,
+                    icon: LucideIcons.type,
                     color: Colors.teal,
                     title: 'Tamaño Texto',
                     child: Slider(
@@ -156,7 +157,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                   ),
                   _buildCenteredSetting(context,
-                    icon: Icons.fingerprint,
+                    icon: LucideIcons.fingerprint,
                     color: Colors.teal,
                     title: 'Huella Dactilar',
                     child: Switch(
@@ -242,7 +243,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline_rounded, color: Colors.redAccent),
+                            const Icon(LucideIcons.alertCircle, color: Colors.redAccent),
                             const SizedBox(width: 12),
                             Expanded(child: Text(errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.bold))),
                           ],
@@ -260,7 +261,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.check_circle_outline_rounded, color: Colors.green),
+                            const Icon(LucideIcons.checkCircle2, color: Colors.green),
                             const SizedBox(width: 12),
                             Expanded(child: Text(successMessage!, style: const TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.bold))),
                           ],
@@ -272,7 +273,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       decoration: InputDecoration(
                         labelText: 'Correo Electrónico', 
                         labelStyle: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600),
-                        prefixIcon: Icon(Icons.alternate_email_rounded, color: primaryColor.withOpacity(0.7)),
+                        prefixIcon: Icon(LucideIcons.mail, color: primaryColor.withOpacity(0.7)),
                         filled: true,
                         fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.grey.shade50,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -287,7 +288,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       decoration: InputDecoration(
                         labelText: 'Contraseña', 
                         labelStyle: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.w600),
-                        prefixIcon: Icon(Icons.lock_outline_rounded, color: primaryColor.withOpacity(0.7)),
+                        prefixIcon: Icon(LucideIcons.lock, color: primaryColor.withOpacity(0.7)),
                         filled: true,
                         fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.grey.shade50,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -465,7 +466,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       radius: 45,
                       backgroundColor: const Color(0xFF1E293B),
                       child: Icon(
-                        Icons.person_rounded, 
+                        LucideIcons.user, 
                         size: 50, 
                         color: isLogged ? const Color(0xFF10B981) : Colors.amber
                       ),
@@ -495,7 +496,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         _showAuthDialog();
                       }
                     },
-                    icon: Icon(isLogged ? Icons.logout : Icons.cloud_sync_rounded),
+                    icon: Icon(isLogged ? LucideIcons.logOut : LucideIcons.cloud),
                     label: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
@@ -515,8 +516,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     const SizedBox(height: 12),
                     TextButton.icon(
                       onPressed: () => _showDeleteAccountConfirmation(sheetCtx),
-                      icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
-                      label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
+                      label: const Text('Eliminar cuenta permanentemente', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w700)),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -610,8 +611,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       child: DropdownButton<String>(
                         value: _selectedCurrency,
                         dropdownColor: const Color(0xFF1E293B),
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.amber),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        icon: const Icon(LucideIcons.chevronDown, color: Colors.amber),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                         items: const [
                           DropdownMenuItem(value: '€', child: Text('EUR (€)')),
                           DropdownMenuItem(value: '\$', child: Text('USD (\$)')),
@@ -733,7 +734,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                     child: IconButton(
                       icon: Icon(
-                        SupabaseRepository.isAuthenticated ? Icons.person_rounded : Icons.person_outline, 
+                        LucideIcons.user, 
                         color: SupabaseRepository.isAuthenticated ? const Color(0xFF10B981) : Colors.white70, 
                         size: 24
                       ),
@@ -746,7 +747,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       color: Colors.white.withOpacity(0.05),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 24),
+                      icon: const Icon(LucideIcons.settings, color: Colors.white70, size: 24),
                       onPressed: _showSettingsDialog,
                     ),
                   ),

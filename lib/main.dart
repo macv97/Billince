@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'screens/main_menu_screen.dart';
 import 'screens/welcome_screen.dart';
@@ -211,23 +212,35 @@ class _BillinceAppState extends State<BillinceApp> {
           brightness: Brightness.light,
         ),
         useMaterial3: true,
-        fontFamily: 'Roboto',
+        fontFamily: GoogleFonts.outfit().fontFamily,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF38BDF8),
-          primary: const Color(0xFF38BDF8), // Cyan brillante
+          primary: const Color(0xFF38BDF8),
           secondary: const Color(0xFF8B5CF6),
           tertiary: const Color(0xFF10B981),
-          surface: const Color(0xFF0F172A), // Azul medianoche profundo
-          onSurface: const Color(0xFFF8FAFC), // Blanco hielo
-          onSurfaceVariant: const Color(0xFF94A3B8), // Gris azulado
+          surface: const Color(0xFF0F172A),
+          onSurface: const Color(0xFFF8FAFC),
+          onSurfaceVariant: const Color(0xFF94A3B8),
           brightness: Brightness.dark,
         ),
         scaffoldBackgroundColor: const Color(0xFF0F172A),
-        cardColor: const Color(0xFF1E293B), // Azul pizarra para tarjetas
+        cardColor: const Color(0xFF1E293B),
         useMaterial3: true,
-        fontFamily: 'Roboto',
+        fontFamily: GoogleFonts.outfit().fontFamily,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
       ),
       builder: (context, child) {
         Widget wrappedChild = MediaQuery(

@@ -22,10 +22,11 @@ Billince es una aplicación móvil de gestión financiera personal de nivel prof
 - **Inicio de sesión opcional:** Útil si temes perder tu móvil o cambiar de dispositivo. Todos tus datos se respaldan en Supabase (PostgreSQL) protegido con políticas RLS.
 - **Grupos (Cloud):** Solo si estás autenticado podrás acceder a este módulo para crear gastos con amigos.
 
-### 4. Accesibilidad y Experiencia Premium (Glassmorphism)
-- Rediseño arquitectónico enfocado en una **UI Glassmorphism** hiper-moderna y corporativa en toda la app (Inicio, Listas, Gastos).
+### 4. Accesibilidad y Experiencia Premium (Minimalismo)
+- Rediseño arquitectónico enfocado en una **UI Glassmorphism / Flat Design** hiper-moderna y corporativa en toda la app.
+- Incorporación de tipografía ultra-legible **Outfit** y set de iconos premium **Lucide Icons** para un aspecto vanguardista.
 - Ajustes de accesibilidad (tipografía ampliable, filtros para daltonismo) y menús perfectamente alineados.
-- Transiciones fluidas, modales redondeados y una coherencia visual absoluta basándose en colores corporativos limpios y elegantes.
+- Transiciones fluidas nativas (FadeUpwards y Cupertino) y una coherencia visual absoluta basándose en la *Lynx Palette* (Midnight Blue, Emerald, Amber).
 
 ### 5. Listas Compartidas en Tiempo Real y Registro de Actividad
 - **Listas Dinámicas:** Comparte listas de la compra mediante enlace o QR. Los cambios (añadir, editar, completar o eliminar productos y etiquetas) se sincronizan en **tiempo real** para todos los integrantes.
@@ -69,6 +70,7 @@ El roadmap, los bugs pendientes y el ciclo de desarrollo activo se gestionan ín
 - **Rediseño del Menú de Ajustes:** Se rediseñó por completo el diálogo de configuración, pasando de elementos a pantalla completa a un layout compacto en filas estilo panel de control profesional.
 - **Resolución de Overflows Visuales:** Se solventó el error de desbordamiento en pantallas pequeñas en la barra de Ajustes de Accesibilidad (Slider de texto) y botones de navegación de la barra superior.
 - **Branding Consolidado:** Integración nativa del isotipo Lince en el Launcher del dispositivo móvil y limpieza visual en la pantalla de bienvenida.
+- **Restyling Premium y Tipografía Global:** Se reemplazó la fuente estándar por **Outfit** (`google_fonts`) y la iconografía nativa por **Lucide Icons**, logrando un diseño extremadamente minimalista, moderno y corporativo. Se implementaron transiciones de pantalla ultra fluidas.
 
 ---
 
